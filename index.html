@@ -1,0 +1,1117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>C+E Spots</title>
+<style>
+:root {
+  --pink:#D4789A; --pink-d:#B85C80; --pink-l:#FAF0F5; --pink-b:#EED8E8;
+  --blue:#4B7FD4; --blue-d:#3567B8; --blue-l:#EEF3FD; --blue-b:#C4D8F4;
+  --bg:#F8F4F8; --card:#fff; --border:#EDE4ED;
+  --text:#1a1a1a; --mid:#666; --muted:#999; --faint:#ccc;
+  --gold:#C9A227; --silver:#9CA3AF; --bronze:#B87333;
+  --r:12px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:14px;min-height:100vh}
+
+/* NAV */
+.topbar{background:#fff;border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:52px;position:sticky;top:0;z-index:100}
+.logo{font-size:18px;font-weight:700;display:flex;align-items:center}
+.logo .c,.logo .e{color:var(--pink)}
+.logo .plus{color:var(--blue);margin:0 1px}
+.logo .sub{font-size:11px;font-weight:400;color:var(--faint);margin-left:7px}
+.nav{display:flex;gap:1px}
+.nb{font-size:13px;padding:5px 12px;border-radius:7px;border:none;background:transparent;color:var(--muted);cursor:pointer;font-family:inherit;transition:all .15s}
+.nb:hover{background:var(--pink-l);color:var(--text)}
+.nb.active{background:var(--pink-l);color:var(--text);font-weight:600}
+.add-btn{font-size:13px;padding:6px 14px;border-radius:8px;border:1.5px solid var(--pink);background:var(--pink);color:#fff;cursor:pointer;font-family:inherit;font-weight:500;transition:all .15s;white-space:nowrap}
+.add-btn:hover{background:var(--pink-d)}
+
+/* PAGES */
+.page{display:none;padding:20px 24px 48px;max-width:1080px;margin:0 auto}
+.page.active{display:block}
+.ph{margin-bottom:18px}
+.ph h1{font-size:21px;font-weight:700}
+.ph p{font-size:13px;color:var(--muted);margin-top:3px}
+
+/* SECTION CARDS — heading lives inside */
+.sc{background:var(--card);border-radius:var(--r);border:1px solid var(--border);margin-bottom:14px;overflow:hidden}
+.sc-head{padding:13px 18px 11px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.sc-head h3{font-size:14px;font-weight:600;color:var(--text)}
+.sc-head .sc-meta{font-size:12px;color:var(--muted)}
+.sc-body{padding:4px 18px 14px}
+
+/* GRIDS */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:14px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+.g13{display:grid;grid-template-columns:1.3fr 1fr;gap:14px;margin-bottom:14px}
+
+/* STAT CARDS */
+.stat{background:var(--card);border-radius:var(--r);border:1px solid var(--border);padding:14px 16px}
+.sl{font-size:11px;color:var(--muted);font-weight:500;margin-bottom:5px}
+.sv{font-size:25px;font-weight:700;line-height:1}
+.ss{font-size:11px;color:var(--faint);margin-top:4px;line-height:1.4}
+
+/* LEGENDARY */
+.leg{background:var(--blue-l);border:1px solid var(--blue-b);border-radius:var(--r);padding:14px 18px;margin-bottom:14px}
+.leg-title{font-size:13px;font-weight:600;color:var(--blue-d);margin-bottom:10px}
+.leg-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #C4D8F433;cursor:pointer;border-radius:6px;transition:background .12s}
+.leg-row:last-child{border-bottom:none}
+.leg-row:hover{background:#D4E8FC44;margin:0 -6px;padding:5px 6px}
+.leg-dish{font-size:13px;font-weight:500;color:#1A3A7A}
+.leg-rest{font-size:11px;color:#5A7AB8;margin-top:2px}
+.leg-sc{font-size:17px;font-weight:700;color:var(--pink)}
+
+/* LIST ROWS */
+.lr{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid #F5EEF5;cursor:pointer;transition:background .12s;border-radius:7px;margin:0 -8px;padding-left:8px;padding-right:8px}
+.lr:last-child{border-bottom:none}
+.lr:hover{background:var(--pink-l)}
+.lr:hover .rn{color:var(--pink-d)}
+.rn{font-size:13px;font-weight:500;color:var(--text)}
+.rs{font-size:11px;color:var(--muted);margin-top:2px}
+.rr{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.score{font-size:15px;font-weight:700;min-width:30px;text-align:right}
+
+/* BARS */
+.br{margin-bottom:10px;cursor:pointer;border-radius:8px;padding:5px 8px;margin:0 -8px 6px;transition:background .12s}
+.br:hover{background:var(--pink-l)}
+.bh{display:flex;justify-content:space-between;font-size:12px;color:var(--mid);margin-bottom:4px}
+.bv{font-weight:600}
+.bt{height:6px;background:#F0E8F4;border-radius:3px;overflow:hidden}
+.bf{height:100%;border-radius:3px}
+.bp{background:var(--pink)} .bb{background:var(--blue)} .bpu{background:#8B5CF6}
+
+/* DISTRIBUTION */
+.dr2{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+.dl{font-size:11px;color:var(--muted);width:52px;text-align:right;flex-shrink:0}
+.dt{flex:1;height:13px;background:#F5EEF5;border-radius:3px;overflow:hidden}
+.df{height:100%;border-radius:3px;background:var(--pink);opacity:.7}
+.dc{font-size:11px;color:var(--muted);width:22px}
+
+/* BADGES */
+.badge{font-size:11px;padding:2px 8px;border-radius:20px;font-weight:500;white-space:nowrap}
+.ba{background:#F0E8F8;color:#7A35A0}
+.bg2{background:var(--blue-l);color:var(--blue-d)}
+.bo{background:#F2EEF8;color:#6055A0}
+.bf2{background:var(--pink-l);color:var(--pink-d)}
+.bb2{background:#FDEAEA;color:#9A2525}
+
+/* TABLE */
+.filters{display:flex;gap:7px;margin-bottom:12px;flex-wrap:wrap;align-items:center}
+.chip{font-size:12px;padding:4px 12px;border-radius:20px;border:1px solid #DDD;background:#fff;color:#777;cursor:pointer;transition:all .15s;white-space:nowrap;user-select:none}
+.chip:hover{border-color:var(--pink);color:var(--pink)}
+.chip.active{background:var(--pink);border-color:var(--pink);color:#fff}
+.chip.bl.active{background:var(--blue);border-color:var(--blue)}
+.srch input{padding:6px 12px;border-radius:8px;border:1px solid #DDD;font-family:inherit;font-size:13px;outline:none;width:240px}
+.srch input:focus{border-color:var(--pink)}
+table{width:100%;border-collapse:collapse;background:#fff;border-radius:var(--r);overflow:hidden;border:1px solid var(--border)}
+thead{background:#FAF5FC}
+th{padding:8px 13px;text-align:left;font-size:11px;font-weight:600;color:var(--faint);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border);cursor:pointer;user-select:none;white-space:nowrap}
+th:hover{color:var(--pink)}
+td{padding:8px 13px;color:#333;border-bottom:1px solid #FAF5FC;font-size:13px}
+tr:last-child td{border-bottom:none}
+tr.trow:hover td{background:#FDF7FD;cursor:pointer}
+
+/* RANK */
+.rnk{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #F5EEF5;cursor:pointer;transition:background .12s;border-radius:7px;margin:0 -8px;padding-left:8px;padding-right:8px}
+.rnk:last-child{border-bottom:none}
+.rnk:hover{background:var(--pink-l)}
+.rnum{font-size:15px;font-weight:700;color:var(--border);width:22px;text-align:center;flex-shrink:0}
+.rnum.gold{color:var(--gold)} .rnum.silver{color:var(--silver)} .rnum.bronze{color:var(--bronze)}
+
+/* DRINKS */
+.drink-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin-bottom:14px}
+.drink-card{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;cursor:pointer;transition:all .15s}
+.drink-card:hover{border-color:var(--pink-b);background:var(--pink-l)}
+.dk-emoji{font-size:22px;margin-bottom:7px}
+.dk-name{font-size:13px;font-weight:600;color:var(--text);line-height:1.3;margin-bottom:2px}
+.dk-rest{font-size:11px;color:var(--muted)}
+.dk-score{font-size:18px;font-weight:700;margin-top:6px}
+
+/* RECS */
+.tc{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:14px;transition:all .15s}
+.tc:hover{border-color:var(--pink-b);background:var(--pink-l)}
+.te{font-size:22px;margin-bottom:6px}
+.tcn{font-size:13px;font-weight:600}
+.tcs{font-size:21px;font-weight:700;margin-top:3px}
+.tcm{font-size:11px;color:var(--muted);margin-top:2px}
+.rec-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;margin-bottom:14px}
+.rc{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;transition:all .15s}
+.rc:hover{border-color:var(--pink-b);background:var(--pink-l)}
+.rc.top{border-color:var(--pink);border-width:1.5px}
+.rc-name{font-size:13px;font-weight:600;margin-bottom:3px}
+.rc-city{font-size:11px;color:var(--muted);margin-bottom:9px}
+.rc-bar{display:flex;align-items:center;gap:6px;margin-bottom:5px}
+.rc-track{flex:1;height:5px;background:#F0E8F4;border-radius:3px;overflow:hidden}
+.rc-fill{height:100%;border-radius:3px;background:var(--pink)}
+.rc-pct{font-size:12px;font-weight:600;color:var(--pink);min-width:32px;text-align:right}
+.rc-reason{font-size:11px;color:var(--muted);line-height:1.5}
+.info-box{background:var(--blue-l);border:1px solid var(--blue-b);border-radius:var(--r);padding:16px 18px}
+.info-box h3{font-size:13px;font-weight:600;color:#1A3A7A;margin-bottom:7px}
+.info-box p,.info-box li{font-size:12px;color:#3A5A8A;line-height:1.7}
+.info-box ul{padding-left:16px}
+.api-pill{display:inline-flex;font-size:10px;padding:2px 8px;border-radius:20px;font-weight:500;margin:1px 3px}
+.apg{background:#EBF5E0;color:#3A6E10} .apy{background:#FEF8E0;color:#8A6A00} .apgr{background:#F0EEF8;color:#555}
+
+/* TO TRY */
+.try-section{margin-bottom:22px}
+.try-sh{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.try-title{font-size:14px;font-weight:600;display:flex;align-items:center;gap:7px}
+.try-pill{font-size:11px;font-weight:500;color:var(--muted);background:#F0E8F4;padding:2px 8px;border-radius:20px}
+.try-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:7px;margin-bottom:8px}
+.try-item{display:flex;align-items:center;gap:9px;padding:10px 13px;background:#fff;border:1px solid var(--border);border-radius:9px;cursor:pointer;transition:all .15s}
+.try-item:hover{border-color:var(--pink-b);background:var(--pink-l)}
+.try-item.visited{opacity:.5}
+.try-item.visited .try-name{text-decoration:line-through;color:var(--faint)}
+.try-chk{width:17px;height:17px;border-radius:50%;border:1.5px solid #DDD;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:#fff;font-size:9px;color:transparent;transition:all .15s}
+.try-item.visited .try-chk{background:var(--blue);border-color:var(--blue);color:#fff}
+.try-name{font-size:13px;color:#333;flex:1;line-height:1.3}
+.try-add{display:flex;gap:7px;margin-top:4px}
+.try-add input{flex:1;padding:6px 12px;border-radius:8px;border:1px dashed var(--pink-b);background:var(--pink-l);font-family:inherit;font-size:13px;outline:none}
+.try-add input:focus{border-color:var(--pink);border-style:solid}
+.try-add button{padding:6px 13px;border-radius:8px;border:1px solid var(--pink);background:#fff;color:var(--pink);font-family:inherit;font-size:13px;font-weight:500;cursor:pointer}
+.try-add button:hover{background:var(--pink);color:#fff}
+
+/* TO DO */
+.todo-section{margin-bottom:20px}
+.todo-section-title{font-size:13px;font-weight:600;color:var(--mid);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px}
+.todo-item{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#fff;border:1px solid var(--border);border-radius:9px;margin-bottom:6px;transition:all .15s}
+.todo-item.done{opacity:.5}
+.todo-item.done .todo-text{text-decoration:line-through;color:var(--faint)}
+.todo-chk{width:18px;height:18px;border-radius:50%;border:1.5px solid #DDD;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;transition:all .15s;font-size:9px;color:transparent;background:#fff}
+.todo-item.done .todo-chk{background:var(--blue);border-color:var(--blue);color:#fff}
+.todo-text{flex:1;font-size:13px;color:var(--text)}
+.cal-btn{font-size:11px;padding:4px 10px;border-radius:7px;border:1px solid var(--blue-b);background:var(--blue-l);color:var(--blue-d);cursor:pointer;font-family:inherit;font-weight:500;white-space:nowrap;transition:all .15s}
+.cal-btn:hover{background:var(--blue);color:#fff;border-color:var(--blue)}
+.todo-add{display:flex;gap:7px;margin-top:8px}
+.todo-add input{flex:1;padding:7px 12px;border-radius:8px;border:1px solid #DDD;font-family:inherit;font-size:13px;outline:none}
+.todo-add input:focus{border-color:var(--pink)}
+.todo-add select{padding:7px 10px;border-radius:8px;border:1px solid #DDD;font-family:inherit;font-size:13px;outline:none}
+.todo-add button{padding:7px 14px;border-radius:8px;border:1.5px solid var(--pink);background:var(--pink);color:#fff;font-family:inherit;font-size:13px;font-weight:500;cursor:pointer}
+
+/* DETAIL PANEL */
+.panel-bg{display:none;position:fixed;inset:0;background:rgba(40,10,40,.2);z-index:150}
+.panel-bg.open{display:block}
+.detail-panel{position:fixed;top:0;right:0;height:100vh;width:390px;max-width:96vw;background:#fff;border-left:1px solid var(--border);z-index:151;transform:translateX(100%);transition:transform .25s cubic-bezier(.4,0,.2,1);overflow-y:auto;display:flex;flex-direction:column}
+.detail-panel.open{transform:translateX(0)}
+.dp-head{padding:18px 20px 14px;border-bottom:1px solid var(--border);position:sticky;top:0;background:#fff;z-index:1}
+.dp-close{position:absolute;top:14px;right:16px;background:none;border:none;font-size:20px;color:var(--muted);cursor:pointer;padding:4px;line-height:1}
+.dp-close:hover{color:var(--text)}
+.dp-cuisine{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px}
+.dp-name{font-size:19px;font-weight:700;color:var(--text);margin-bottom:3px;line-height:1.2;padding-right:30px}
+.dp-meta{font-size:12px;color:var(--muted);margin-bottom:11px}
+.dp-score-row{display:flex;align-items:baseline;gap:9px}
+.dp-score-big{font-size:34px;font-weight:700;line-height:1}
+.dp-score-label{font-size:12px;color:var(--muted)}
+.dp-body{padding:16px 20px;flex:1}
+.dp-sec{font-size:11px;font-weight:600;color:var(--faint);text-transform:uppercase;letter-spacing:.6px;margin:16px 0 8px}
+.dp-sec:first-child{margin-top:0}
+.dp-stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.dp-stat{background:var(--bg);border-radius:8px;padding:9px 11px}
+.dp-stat-l{font-size:11px;color:var(--muted);margin-bottom:2px}
+.dp-stat-v{font-size:15px;font-weight:700}
+.dp-dish{display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid #F8F4F8;cursor:pointer;border-radius:6px;transition:background .12s}
+.dp-dish:last-child{border-bottom:none}
+.dp-dish:hover{background:var(--pink-l);margin:0 -6px;padding:7px 6px}
+.dp-dish-name{font-size:13px;color:var(--text)}
+.dp-dish-sc{font-size:14px;font-weight:700;margin-left:8px}
+.dp-highlight{background:var(--pink-l);border:1px solid var(--pink-b);border-radius:9px;padding:11px 13px;margin-top:4px}
+.dp-hl{font-size:11px;color:var(--pink);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px}
+
+/* MODAL */
+.overlay{display:none;position:fixed;inset:0;background:rgba(40,10,40,.3);z-index:200;align-items:center;justify-content:center}
+.overlay.open{display:flex}
+.modal{background:#fff;border-radius:16px;padding:24px 26px;width:520px;max-width:95vw;max-height:90vh;overflow-y:auto;border:1px solid var(--border)}
+.modal h2{font-size:16px;font-weight:700;margin-bottom:2px}
+.modal-sub{font-size:12px;color:var(--muted);margin-bottom:18px}
+.field{margin-bottom:13px}
+.field label{display:block;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+.field input,.field select,.field textarea{width:100%;padding:8px 11px;border:1px solid #DDD;border-radius:8px;font-family:inherit;font-size:13px;outline:none}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--pink)}
+.field textarea{resize:vertical;min-height:60px}
+.f2{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.divider{border:none;border-top:1px solid var(--border);margin:16px 0}
+.dish-head{display:grid;grid-template-columns:1fr 38px 75px 26px;gap:7px;padding:0 11px;margin-bottom:4px}
+.dish-head span{font-size:10px;font-weight:600;color:var(--faint);text-transform:uppercase;letter-spacing:.4px}
+.dish-list{display:flex;flex-direction:column;gap:7px;margin-bottom:9px}
+.dish-row{display:grid;grid-template-columns:1fr 38px 75px 26px;gap:7px;align-items:center;background:var(--pink-l);border-radius:8px;padding:7px 11px}
+.dish-row input{background:#fff}
+.rm-btn{background:none;border:none;color:var(--faint);font-size:16px;cursor:pointer;padding:0;line-height:1}
+.rm-btn:hover{color:var(--pink)}
+.add-dish-btn{font-size:12px;color:var(--blue);cursor:pointer;background:none;border:none;font-family:inherit;padding:0}
+.add-dish-btn:hover{text-decoration:underline}
+.modal-actions{display:flex;gap:9px;justify-content:flex-end;margin-top:16px}
+.btn-cancel{padding:7px 16px;border-radius:8px;border:1px solid #DDD;background:#fff;font-family:inherit;font-size:13px;cursor:pointer;color:#777}
+.btn-save{padding:7px 18px;border-radius:8px;border:1.5px solid var(--pink);background:var(--pink);color:#fff;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer}
+.btn-save:hover{background:var(--pink-d)}
+.city-tag{font-size:11px;padding:2px 7px;border-radius:5px;background:#F0E8F4;color:#8055A0}
+@keyframes spin{to{transform:rotate(360deg)}}
+#loading-overlay{position:fixed;inset:0;background:rgba(255,255,255,.9);z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px}
+#loading-overlay .spinner{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--pink);border-radius:50%;animation:spin .8s linear infinite}
+#loading-overlay .loading-txt{font-size:14px;color:var(--muted)}
+</style>
+</head>
+<body>
+
+<div id="loading-overlay">
+  <div class="spinner"></div>
+  <div class="loading-txt">Loading your spots…</div>
+</div>
+
+<div class="topbar">
+  <div class="logo"><span class="c">C</span><span class="plus">+</span><span class="e">E</span><span class="sub">Spots</span></div>
+  <div class="nav">
+    <button class="nb active" onclick="nav('overview',this)">Overview</button>
+    <button class="nb" onclick="nav('dishes',this)">All Dishes</button>
+    <button class="nb" onclick="nav('drinks',this)">Drinks ☕</button>
+    <button class="nb" onclick="nav('rankings',this)">Rankings</button>
+    <button class="nb" onclick="nav('recs',this)">For You ✨</button>
+    <button class="nb" onclick="nav('totry',this)">To Try</button>
+    <button class="nb" onclick="nav('todo',this)">To Do</button>
+  </div>
+  <button class="add-btn" onclick="openModal()">+ Log a visit</button>
+</div>
+
+<!-- OVERVIEW -->
+<div id="page-overview" class="page active">
+  <div class="ph"><h1>Our food diary 🍝</h1><p id="ov-sub"></p></div>
+  <div class="g4" id="ov-stats"></div>
+  <div class="leg" id="ov-leg"></div>
+  <div class="g13">
+    <div class="sc"><div class="sc-head"><h3>Top Restaurants</h3><span class="sc-meta" id="ov-rest-meta"></span></div><div class="sc-body" id="ov-rests"></div></div>
+    <div class="sc"><div class="sc-head"><h3>Favorites by Category</h3></div><div class="sc-body" id="ov-cats"></div></div>
+  </div>
+  <div class="g3">
+    <div class="sc"><div class="sc-head"><h3>Rating Distribution</h3></div><div class="sc-body" id="ov-dist"></div></div>
+    <div class="sc"><div class="sc-head"><h3>Cities Visited</h3></div><div class="sc-body" id="ov-cities"></div></div>
+    <div class="sc"><div class="sc-head"><h3>Recent Dishes</h3></div><div class="sc-body" id="ov-recent"></div></div>
+  </div>
+  <div class="g2">
+    <div class="sc"><div class="sc-head"><h3>Dish Tiers</h3></div><div class="sc-body" id="ov-tiers"></div></div>
+    <div class="sc"><div class="sc-head"><h3>Best Dish per Category</h3></div><div class="sc-body" id="ov-best-cat"></div></div>
+  </div>
+</div>
+
+<!-- ALL DISHES -->
+<div id="page-dishes" class="page">
+  <div class="ph"><h1>All Dishes</h1><p id="dishes-ct"></p></div>
+  <div class="filters">
+    <div class="srch"><input type="text" placeholder="Search dishes or restaurants..." id="srch-inp" oninput="filterDishes()"></div>
+    <button class="chip active" onclick="setCityF('all',this)">All</button>
+    <button class="chip" onclick="setCityF('NYC',this)">NYC</button>
+    <button class="chip" onclick="setCityF('Stockholm',this)">Stockholm</button>
+    <button class="chip" onclick="setCityF('Palm Beach',this)">Palm Beach</button>
+    <button class="chip" onclick="setCityF('Ithaca',this)">Ithaca</button>
+    <button class="chip" onclick="setCityF('Bangor',this)">Maine</button>
+    <button class="chip bl" onclick="setRatingF('amazing',this)">Amazing 9+</button>
+  </div>
+  <table><thead><tr>
+    <th onclick="srt('dish')">Dish</th><th onclick="srt('restaurant')">Restaurant</th>
+    <th onclick="srt('city')">City</th><th onclick="srt('date')">Date</th>
+    <th onclick="srt('rating')">Rating ↕</th><th></th>
+  </tr></thead><tbody id="dishes-body"></tbody></table>
+</div>
+
+<!-- DRINKS -->
+<div id="page-drinks" class="page">
+  <div class="ph"><h1>Drinks ☕</h1><p id="dk-sub"></p></div>
+  <div class="filters" id="dk-filters">
+    <button class="chip active" onclick="setDrinkF('all',this)">All Drinks</button>
+    <button class="chip" onclick="setDrinkF('matcha',this)">Matcha & Tea</button>
+    <button class="chip" onclick="setDrinkF('coffee',this)">Coffee</button>
+    <button class="chip" onclick="setDrinkF('cocktail',this)">Cocktails</button>
+    <button class="chip" onclick="setDrinkF('other',this)">Other</button>
+  </div>
+  <div class="g4" id="dk-stats"></div>
+  <div class="sc"><div class="sc-head"><h3>All Drinks, Ranked</h3></div><div class="sc-body" id="dk-list"></div></div>
+</div>
+
+<!-- RANKINGS -->
+<div id="page-rankings" class="page">
+  <div class="ph"><h1>Rankings</h1><p>Sorted by average dish rating</p></div>
+  <div class="g2">
+    <div class="sc"><div class="sc-head"><h3>Top Restaurants</h3></div><div class="sc-body" id="rk-rests"></div></div>
+    <div class="sc"><div class="sc-head"><h3>Top Dishes of All Time</h3></div><div class="sc-body" id="rk-dishes"></div></div>
+  </div>
+  <div class="g2">
+    <div class="sc"><div class="sc-head"><h3>Most Consistent Spots</h3><span class="sc-meta">lowest variance</span></div><div class="sc-body" id="rk-consist"></div></div>
+    <div class="sc"><div class="sc-head"><h3>Best Cities</h3></div><div class="sc-body" id="rk-cities"></div></div>
+  </div>
+</div>
+
+<!-- FOR YOU -->
+<div id="page-recs" class="page">
+  <div class="ph"><h1>For You ✨</h1><p>Based on what you've loved — here's what to try next.</p></div>
+  <div class="sc"><div class="sc-head"><h3>Your Taste Profile</h3></div><div class="sc-body" style="padding-top:12px">
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px" id="taste-grid"></div>
+  </div></div>
+  <div class="sc"><div class="sc-head"><h3>Top Picks from Your List</h3><span class="sc-meta">based on what you love</span></div><div class="sc-body" style="padding-top:12px">
+    <div class="rec-grid" id="rec-cards"></div>
+  </div></div>
+  <div class="sc"><div class="sc-head"><h3>Explore Something New</h3></div><div class="sc-body" id="rec-explore"></div></div>
+  <div class="info-box" style="margin-top:14px">
+    <h3>🔌 Want live restaurant data?</h3>
+    <ul>
+      <li><strong>Yelp Fusion API</strong> <span class="api-pill apg">✓ Best option</span> — Free trial. Returns star rating, price range, cuisine tags. Easy to add.</li>
+      <li><strong>Google Places API</strong> <span class="api-pill apy">Paid after free tier</span> — Very comprehensive ratings + hours + photos.</li>
+      <li><strong>OpenTable</strong> <span class="api-pill apy">Partner approval required</span> — Food/service/ambience split ratings.</li>
+      <li><strong>Beli</strong> <span class="api-pill apgr">No public API</span> · <strong>Toast</strong> <span class="api-pill apgr">Restaurant POS only</span></li>
+    </ul>
+    <p style="margin-top:10px"><strong>Recommendation:</strong> Start with Yelp — free, sign up at developer.yelp.com, and we can add "Yelp: 4.5 ⭐ · $$$" to each restaurant card.</p>
+  </div>
+</div>
+
+<!-- TO TRY -->
+<div id="page-totry" class="page">
+  <div class="ph"><h1>To Try</h1><p>Click any place to log your visit and add dish scores.</p></div>
+  <div id="totry-content"></div>
+</div>
+
+<!-- TO DO -->
+<div id="page-todo" class="page">
+  <div class="ph"><h1>To Do</h1><p>Tasks, things to make, places to see. Click 📅 to add to Google Calendar.</p></div>
+  <div id="todo-content"></div>
+  <div class="sc" style="margin-top:8px">
+    <div class="sc-head"><h3>Add a Task</h3></div>
+    <div class="sc-body" style="padding-top:12px">
+      <div class="todo-add">
+        <input type="text" id="todo-inp" placeholder="Add a new task..." onkeydown="if(event.key==='Enter')addTodo()" />
+        <select id="todo-cat">
+          <option value="Misc">Misc</option>
+          <option value="To cook">To Cook</option>
+          <option value="Shopping">Shopping</option>
+          <option value="Activities">Activities</option>
+          <option value="Restaurants">Restaurants</option>
+        </select>
+        <button onclick="addTodo()">Add</button>
+      </div>
+    </div>
+  </div>
+  <div class="info-box" style="margin-top:14px">
+    <h3>📅 Google Calendar</h3>
+    <p>Click the calendar button on any task to open Google Calendar with it pre-filled — just hit Save. For full two-way sync (so both of you see the same tasks), we can connect to the Google Calendar API or Google Sheets. Ask me to set that up!</p>
+  </div>
+</div>
+
+<!-- DETAIL PANEL -->
+<div class="panel-bg" id="panel-bg" onclick="closePanel()"></div>
+<div class="detail-panel" id="detail-panel">
+  <div class="dp-head">
+    <button class="dp-close" onclick="closePanel()">×</button>
+    <div class="dp-cuisine" id="dp-cuisine"></div>
+    <div class="dp-name" id="dp-name"></div>
+    <div class="dp-meta" id="dp-meta"></div>
+    <div class="dp-score-row">
+      <div class="dp-score-big" id="dp-score"></div>
+      <div class="dp-score-label" id="dp-score-lbl"></div>
+      <div id="dp-badge"></div>
+    </div>
+  </div>
+  <div class="dp-body" id="dp-body"></div>
+</div>
+
+<!-- MODAL -->
+<div class="overlay" id="modal-overlay">
+  <div class="modal">
+    <h2 id="modal-title">Log a Visit</h2>
+    <div class="modal-sub" id="modal-sub">Fill in the restaurant and rate each dish you tried.</div>
+    <div class="f2">
+      <div class="field"><label>Restaurant</label><input id="f-rest" placeholder="e.g. Nobu" /></div>
+      <div class="field"><label>City</label>
+        <select id="f-city" onchange="handleCityChange()">
+          <option>NYC</option><option>Stockholm</option><option>Palm Beach</option>
+          <option>Ithaca</option><option>Bangor</option><option>Hamptons</option>
+          <option value="__custom__">Other (type below) →</option>
+        </select>
+        <input type="text" id="f-city-custom" placeholder="Enter city name..." style="display:none;margin-top:6px;width:100%;padding:7px 11px;border:1px solid #DDD;border-radius:8px;font-family:inherit;font-size:13px;outline:none" />
+      </div>
+    </div>
+    <div class="field" style="max-width:190px"><label>Date visited</label><input type="date" id="f-date" /></div>
+    <hr class="divider">
+    <div class="field">
+      <label>Dishes <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:12px;color:var(--faint)">— add as many as you tried</span></label>
+      <div class="dish-head"><span>Dish name</span><span>Emoji</span><span>Rating /10</span><span></span></div>
+      <div class="dish-list" id="dish-list"></div>
+      <button class="add-dish-btn" onclick="addDishRow()">+ add another dish</button>
+    </div>
+    <div class="field"><label>Notes (optional)</label><textarea id="f-notes" placeholder="Vibe, service, anything worth remembering..."></textarea></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-save" onclick="saveEntry()">Save Visit</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── DATA ─────────────────────────────────────────────────────────────────────
+const SEED=[
+  {id:1,restaurant:"Croft Alley",city:"NYC",date:"2026-05-04",dish:"Banana Pancakes",emoji:"🥞",rating:9.8,notes:"GF"},
+  {id:2,restaurant:"Croft Alley",city:"NYC",date:"2026-05-04",dish:"Breakfast Burrito",emoji:"🌯",rating:9.4,notes:""},
+  {id:3,restaurant:"Croft Alley",city:"NYC",date:"2026-05-04",dish:"French Scramble",emoji:"🐣",rating:6.4,notes:""},
+  {id:4,restaurant:"Croft Alley",city:"NYC",date:"2026-05-04",dish:"Salted Vanilla Cold Foam Matcha",emoji:"🍵",rating:9.4,notes:""},
+  {id:5,restaurant:"JG Melon",city:"NYC",date:"2026-03-29",dish:"Burger",emoji:"🍔",rating:8.1,notes:""},
+  {id:6,restaurant:"JG Melon",city:"NYC",date:"2026-03-29",dish:"Coin Fries",emoji:"🥔",rating:7.3,notes:""},
+  {id:7,restaurant:"JG Melon",city:"NYC",date:"2026-03-29",dish:"Chili",emoji:"🍲",rating:8.1,notes:""},
+  {id:8,restaurant:"JG Melon",city:"NYC",date:"2026-03-29",dish:"Molten Lava Cake",emoji:"🍫",rating:9.2,notes:"GF"},
+  {id:9,restaurant:"Casa Tua",city:"NYC",date:"2026-03-30",dish:"Pornstar Martini",emoji:"🍸",rating:8.6,notes:""},
+  {id:10,restaurant:"Casa Tua",city:"NYC",date:"2026-03-30",dish:"Prosciutto & Mozzarella",emoji:"🧀",rating:9.6,notes:""},
+  {id:11,restaurant:"Casa Tua",city:"NYC",date:"2026-03-30",dish:"GF Bread + Olive/Eggplant",emoji:"🍞",rating:8.7,notes:""},
+  {id:12,restaurant:"Casa Tua",city:"NYC",date:"2026-03-30",dish:"Spaghetti alla Nerano",emoji:"🍝",rating:9.7,notes:"GF rigatoni"},
+  {id:13,restaurant:"Casa Tua",city:"NYC",date:"2026-03-30",dish:"NY Striploin",emoji:"🥩",rating:9.7,notes:""},
+  {id:14,restaurant:"Casa Tua",city:"NYC",date:"2026-03-30",dish:"Crispy Potatoes",emoji:"🥔",rating:8.0,notes:""},
+  {id:15,restaurant:"Casa Tua",city:"NYC",date:"2026-05-20",dish:"Asparagus Straciatella Risotto",emoji:"🍛",rating:8.6,notes:""},
+  {id:16,restaurant:"Nightly's",city:"NYC",date:"2026-05-03",dish:"Spinach Artichoke Dip",emoji:"🍃",rating:8.6,notes:""},
+  {id:17,restaurant:"Nightly's",city:"NYC",date:"2026-05-03",dish:"Street Corn",emoji:"🌽",rating:7.2,notes:""},
+  {id:18,restaurant:"Nightly's",city:"NYC",date:"2026-05-03",dish:"Spring Risotto",emoji:"🍚",rating:8.9,notes:""},
+  {id:19,restaurant:"Nightly's",city:"NYC",date:"2026-05-03",dish:"Marry Me Chicken",emoji:"🍗",rating:7.1,notes:""},
+  {id:20,restaurant:"Double Knot",city:"NYC",date:"2026-03-26",dish:"Tuna Crispy Rice",emoji:"🍚",rating:9.1,notes:""},
+  {id:21,restaurant:"Double Knot",city:"NYC",date:"2026-03-26",dish:"Shishito Peppers",emoji:"🌶️",rating:6.0,notes:""},
+  {id:22,restaurant:"Double Knot",city:"NYC",date:"2026-03-26",dish:"Mushroom Truffle Fried Rice",emoji:"🍚",rating:9.1,notes:""},
+  {id:23,restaurant:"Double Knot",city:"NYC",date:"2026-03-26",dish:"Wagyu Bavette",emoji:"🥩",rating:8.1,notes:""},
+  {id:24,restaurant:"Double Knot",city:"NYC",date:"2026-03-26",dish:"Tuna Roll",emoji:"🍱",rating:5.4,notes:""},
+  {id:25,restaurant:"Double Knot",city:"NYC",date:"2026-03-26",dish:"Salmon Avocado Roll",emoji:"🍱",rating:7.5,notes:""},
+  {id:26,restaurant:"Double Knot",city:"NYC",date:"2026-03-26",dish:"Hand Roll",emoji:"🍣",rating:7.1,notes:""},
+  {id:27,restaurant:"Double Knot",city:"NYC",date:"2026-03-26",dish:"Edamame",emoji:"🫛",rating:7.2,notes:""},
+  {id:28,restaurant:"Kappo Masa",city:"NYC",date:"",dish:"Tuna Tartare",emoji:"🍣",rating:7.1,notes:""},
+  {id:29,restaurant:"Kappo Masa",city:"NYC",date:"",dish:"Shishito Peppers",emoji:"🌶️",rating:8.1,notes:""},
+  {id:30,restaurant:"Kappo Masa",city:"NYC",date:"",dish:"Edamame",emoji:"🫛",rating:8.1,notes:""},
+  {id:31,restaurant:"Kappo Masa",city:"NYC",date:"",dish:"Beef Skewers",emoji:"🥩",rating:9.6,notes:""},
+  {id:32,restaurant:"Kappo Masa",city:"NYC",date:"",dish:"Tuna Avocado Roll",emoji:"🍣",rating:9.1,notes:""},
+  {id:33,restaurant:"Kappo Masa",city:"NYC",date:"",dish:"Miso Crème Brûlée",emoji:"🍮",rating:7.6,notes:""},
+  {id:34,restaurant:"Le Gaz",city:"NYC",date:"2026-05-20",dish:"Matcha",emoji:"🍵",rating:8.7,notes:""},
+  {id:35,restaurant:"Le Gaz",city:"NYC",date:"2026-05-20",dish:"Iced Coffee",emoji:"☕️",rating:6.7,notes:""},
+  {id:36,restaurant:"Nobu",city:"NYC",date:"2026-05-19",dish:"Shishito Peppers",emoji:"🫑",rating:9.1,notes:""},
+  {id:37,restaurant:"Nobu",city:"NYC",date:"2026-05-19",dish:"Crispy Rice Tuna & Avocado",emoji:"🍚",rating:9.9,notes:""},
+  {id:38,restaurant:"Nobu",city:"NYC",date:"2026-05-19",dish:"Tuna Roll",emoji:"🍣",rating:7.0,notes:""},
+  {id:39,restaurant:"Nobu",city:"NYC",date:"2026-05-19",dish:"Avocado Roll",emoji:"🥑",rating:8.7,notes:""},
+  {id:40,restaurant:"Nobu",city:"NYC",date:"2026-05-19",dish:"Yellowtail Jalapeño",emoji:"🌶️",rating:5.2,notes:""},
+  {id:41,restaurant:"Nobu",city:"NYC",date:"2026-05-19",dish:"Bento Box Bday Bananzo",emoji:"🍫",rating:9.6,notes:"Birthday!"},
+  {id:42,restaurant:"La Esquina",city:"NYC",date:"2026-05-21",dish:"Guac + Chips",emoji:"🥑",rating:8.2,notes:""},
+  {id:43,restaurant:"La Esquina",city:"NYC",date:"2026-05-21",dish:"Street Corn",emoji:"🌽",rating:7.6,notes:""},
+  {id:44,restaurant:"La Esquina",city:"NYC",date:"2026-05-21",dish:"Steak Quesadilla",emoji:"🥩",rating:7.7,notes:""},
+  {id:45,restaurant:"La Esquina",city:"NYC",date:"2026-05-21",dish:"Chicken Taco",emoji:"🌮",rating:8.7,notes:""},
+  {id:46,restaurant:"La Esquina",city:"NYC",date:"2026-05-21",dish:"Short-Rib Taco",emoji:"🌮",rating:8.1,notes:""},
+  {id:47,restaurant:"La Esquina",city:"NYC",date:"2026-05-21",dish:"Steak Taco",emoji:"🌮",rating:8.2,notes:""},
+  {id:48,restaurant:"Noglu",city:"NYC",date:"2026-05-21",dish:"Bacon Egg & Cheese",emoji:"🍳",rating:6.8,notes:""},
+  {id:49,restaurant:"Noglu",city:"NYC",date:"2026-05-21",dish:"Croque Monsieur",emoji:"🥪",rating:7.8,notes:""},
+  {id:50,restaurant:"Noglu",city:"NYC",date:"2026-05-21",dish:"Charlie's Turkey Club",emoji:"🍞",rating:4.0,notes:""},
+  {id:51,restaurant:"Noglu",city:"NYC",date:"2026-05-21",dish:"Almond Croissant",emoji:"🥐",rating:8.9,notes:""},
+  {id:52,restaurant:"Noglu",city:"NYC",date:"2026-05-21",dish:"Chocolate Banana Muffin",emoji:"🍌",rating:7.2,notes:""},
+  {id:53,restaurant:"Noglu",city:"NYC",date:"2026-05-21",dish:"Raspberry Muffin",emoji:"🍓",rating:8.0,notes:""},
+  {id:54,restaurant:"Noglu",city:"NYC",date:"2026-05-21",dish:"Blueberry Muffin",emoji:"🫐",rating:7.9,notes:""},
+  {id:55,restaurant:"Noglu",city:"NYC",date:"2026-05-21",dish:"Chocolate Muffin",emoji:"🍫",rating:7.2,notes:""},
+  {id:56,restaurant:"Noglu",city:"NYC",date:"2026-05-21",dish:"Croissant",emoji:"🥐",rating:7.3,notes:""},
+  {id:57,restaurant:"Noglu",city:"NYC",date:"2026-05-21",dish:"Iced Latte",emoji:"☕️",rating:9.0,notes:""},
+  {id:58,restaurant:"Palm Beach Grill",city:"Palm Beach",date:"2026-04-03",dish:"Grilled Artichoke",emoji:"🥬",rating:9.8,notes:""},
+  {id:59,restaurant:"Palm Beach Grill",city:"Palm Beach",date:"2026-04-03",dish:"Beet Salad",emoji:"🥗",rating:5.4,notes:""},
+  {id:60,restaurant:"Palm Beach Grill",city:"Palm Beach",date:"2026-04-03",dish:"Ribs",emoji:"🍖",rating:8.6,notes:""},
+  {id:61,restaurant:"Palm Beach Grill",city:"Palm Beach",date:"2026-04-03",dish:"Shoestring Fries",emoji:"🍟",rating:8.2,notes:""},
+  {id:62,restaurant:"Palm Beach Grill",city:"Palm Beach",date:"2026-04-03",dish:"Filet",emoji:"🥩",rating:9.4,notes:""},
+  {id:63,restaurant:"Sourseed",city:"Palm Beach",date:"2026-04-04",dish:"Coconut Matcha",emoji:"🍵",rating:9.5,notes:""},
+  {id:64,restaurant:"Sourseed",city:"Palm Beach",date:"2026-04-04",dish:"Strawberry Smoothie",emoji:"🍓",rating:6.8,notes:""},
+  {id:65,restaurant:"Sourseed",city:"Palm Beach",date:"2026-04-04",dish:"Bagel Tomato Cream Cheese",emoji:"🍅",rating:9.1,notes:""},
+  {id:66,restaurant:"Sourseed",city:"Palm Beach",date:"2026-04-04",dish:"Bacon Egg & Cheese",emoji:"🥚",rating:7.8,notes:""},
+  {id:67,restaurant:"BlueDoor",city:"Palm Beach",date:"2026-04-02",dish:"Tuna Carpaccio",emoji:"🍣",rating:8.3,notes:""},
+  {id:68,restaurant:"BlueDoor",city:"Palm Beach",date:"2026-04-02",dish:"Burrata",emoji:"🧀",rating:6.4,notes:""},
+  {id:69,restaurant:"BlueDoor",city:"Palm Beach",date:"2026-04-02",dish:"Grilled Halloumi",emoji:"🧀",rating:8.4,notes:""},
+  {id:70,restaurant:"BlueDoor",city:"Palm Beach",date:"2026-04-02",dish:"Carrots",emoji:"🥕",rating:7.2,notes:""},
+  {id:71,restaurant:"BlueDoor",city:"Palm Beach",date:"2026-04-02",dish:"Branzino",emoji:"🐟",rating:8.5,notes:""},
+  {id:72,restaurant:"Buccan",city:"Palm Beach",date:"",dish:"Spicy Pork Taco",emoji:"🌮",rating:9.1,notes:""},
+  {id:73,restaurant:"Buccan",city:"Palm Beach",date:"",dish:"NY Strip Steak",emoji:"🥩",rating:9.5,notes:""},
+  {id:74,restaurant:"Buccan",city:"Palm Beach",date:"",dish:"Parmesan Fries",emoji:"🍟",rating:9.0,notes:""},
+  {id:75,restaurant:"Buccan",city:"Palm Beach",date:"",dish:"Beet Carpaccio",emoji:"🥗",rating:8.7,notes:""},
+  {id:76,restaurant:"Buccan",city:"Palm Beach",date:"",dish:"Tuna Avocado Roll",emoji:"🍣",rating:8.8,notes:""},
+  {id:77,restaurant:"LoLa",city:"Palm Beach",date:"",dish:"Grilled Octopus",emoji:"🐙",rating:9.1,notes:""},
+  {id:78,restaurant:"LoLa",city:"Palm Beach",date:"",dish:"Wagyu Steak",emoji:"🥩",rating:7.6,notes:""},
+  {id:79,restaurant:"LoLa",city:"Palm Beach",date:"",dish:"Truffle Fries",emoji:"🍟",rating:8.7,notes:""},
+  {id:80,restaurant:"LoLa",city:"Palm Beach",date:"",dish:"Tuna Avocado Roll",emoji:"🥑",rating:7.3,notes:""},
+  {id:81,restaurant:"LoLa",city:"Palm Beach",date:"",dish:"Asaho Roll",emoji:"🍣",rating:8.8,notes:""},
+  {id:82,restaurant:"Domino's",city:"Bangor",date:"2026-05-25",dish:"GF Pepperoni Pizza",emoji:"🍕",rating:7.8,notes:""},
+  {id:83,restaurant:"Timber",city:"Bangor",date:"2026-05-26",dish:"Spinach & Artichoke Dip",emoji:"🥬",rating:8.7,notes:""},
+  {id:84,restaurant:"Timber",city:"Bangor",date:"2026-05-26",dish:"Margarita Pizza",emoji:"🍕",rating:6.5,notes:""},
+  {id:85,restaurant:"Timber",city:"Bangor",date:"2026-05-26",dish:"Burger",emoji:"🍔",rating:9.1,notes:""},
+  {id:86,restaurant:"Timber",city:"Bangor",date:"2026-05-26",dish:"Fries",emoji:"🍟",rating:7.3,notes:""},
+  {id:87,restaurant:"Timber",city:"Bangor",date:"2026-05-26",dish:"Fish Tacos",emoji:"🌮",rating:5.2,notes:""},
+  {id:88,restaurant:"Ett Hem",city:"Stockholm",date:"2026-05-27",dish:"Omelette",emoji:"🐣",rating:9.7,notes:""},
+  {id:89,restaurant:"Riche",city:"Stockholm",date:"2026-05-27",dish:"Toast Skagen",emoji:"🍤",rating:8.4,notes:""},
+  {id:90,restaurant:"Riche",city:"Stockholm",date:"2026-05-27",dish:"Swedish Meatballs",emoji:"🍗",rating:8.8,notes:""},
+  {id:91,restaurant:"Riche",city:"Stockholm",date:"2026-05-27",dish:"Gino",emoji:"🥝",rating:8.7,notes:""},
+  {id:92,restaurant:"Astoria",city:"Stockholm",date:"2026-05-27",dish:"Truffle Pizza",emoji:"🍕",rating:9.1,notes:""},
+  {id:93,restaurant:"Astoria",city:"Stockholm",date:"2026-05-27",dish:"Prosciutto & Melon",emoji:"🍈",rating:6.7,notes:""},
+  {id:94,restaurant:"Astoria",city:"Stockholm",date:"2026-05-27",dish:"Rockefeller Oysters",emoji:"🦪",rating:8.0,notes:""},
+  {id:95,restaurant:"Astoria",city:"Stockholm",date:"2026-05-27",dish:"Steak Frites",emoji:"🥩",rating:8.2,notes:""},
+  {id:96,restaurant:"Astoria",city:"Stockholm",date:"2026-05-27",dish:"Caesar Salad",emoji:"🥗",rating:6.3,notes:""},
+  {id:97,restaurant:"Astoria",city:"Stockholm",date:"2026-05-27",dish:"7/11 Ris Glass Ice Cream",emoji:"🍦",rating:9.4,notes:""},
+  {id:98,restaurant:"Lisa Elmqvist",city:"Stockholm",date:"2026-05-28",dish:"Dover Sole",emoji:"🐟",rating:8.9,notes:""},
+  {id:99,restaurant:"Lisa Elmqvist",city:"Stockholm",date:"2026-05-28",dish:"Frites",emoji:"🍟",rating:8.6,notes:""},
+  {id:100,restaurant:"Gateau",city:"Stockholm",date:"2026-05-28",dish:"Chocolate Mousse Cake",emoji:"🍫",rating:8.9,notes:""},
+  {id:101,restaurant:"Gateau",city:"Stockholm",date:"2026-05-28",dish:"Strawberry Vanilla Pistachio Cake",emoji:"🍰",rating:8.9,notes:""},
+  {id:102,restaurant:"Gateau",city:"Stockholm",date:"2026-05-28",dish:"Chocolate Bol",emoji:"⚽️",rating:8.5,notes:""},
+  {id:103,restaurant:"Gateau",city:"Stockholm",date:"2026-05-28",dish:"Cardamom Bun",emoji:"🥐",rating:8.6,notes:""},
+  {id:104,restaurant:"Teater Grillen",city:"Stockholm",date:"2026-05-28",dish:"White Asparagus w/ Hazelnut Brown Butter",emoji:"🧈",rating:10.0,notes:"PERFECT."},
+  {id:105,restaurant:"Teater Grillen",city:"Stockholm",date:"2026-05-28",dish:"Burrata",emoji:"🧀",rating:6.3,notes:""},
+  {id:106,restaurant:"Teater Grillen",city:"Stockholm",date:"2026-05-28",dish:"Steak Frites",emoji:"🥩",rating:9.7,notes:""},
+  {id:107,restaurant:"Teater Grillen",city:"Stockholm",date:"2026-05-28",dish:"Chocolate Mousse",emoji:"🍫",rating:10.0,notes:"PERFECT."},
+  {id:108,restaurant:"NK Varmkorv",city:"Stockholm",date:"2026-05-29",dish:"Hot Dog",emoji:"🌭",rating:7.8,notes:""},
+  {id:109,restaurant:"Fabrique",city:"Stockholm",date:"2026-05-29",dish:"Cranberry Bar",emoji:"🍫",rating:8.1,notes:""},
+  {id:110,restaurant:"Fabrique",city:"Stockholm",date:"2026-05-29",dish:"Almond Cardamom Cake",emoji:"🧁",rating:6.2,notes:""},
+  {id:111,restaurant:"Fabrique",city:"Stockholm",date:"2026-05-29",dish:"Cinnamon Bun",emoji:"🧱",rating:9.4,notes:""},
+  {id:112,restaurant:"Villa Dagmar",city:"Stockholm",date:"2026-05-29",dish:"Margarita Pizza",emoji:"🍕",rating:9.9,notes:""},
+  {id:113,restaurant:"Villa Dagmar",city:"Stockholm",date:"2026-05-29",dish:"Fries w/ Béarnaise",emoji:"🍟",rating:9.9,notes:""},
+  {id:114,restaurant:"Chez Jolie",city:"Stockholm",date:"2026-05-29",dish:"Artichoke",emoji:"🌱",rating:5.4,notes:""},
+  {id:115,restaurant:"Chez Jolie",city:"Stockholm",date:"2026-05-29",dish:"Beef Filet w/ Potato Wedges",emoji:"🥩",rating:8.1,notes:""},
+  {id:116,restaurant:"Chez Jolie",city:"Stockholm",date:"2026-05-29",dish:"Rhubarb Ice Cream",emoji:"🍨",rating:7.0,notes:""},
+  {id:117,restaurant:"Chez Jolie",city:"Stockholm",date:"2026-05-29",dish:"Ice Cream w/ Warm Chocolate Sauce",emoji:"🍨",rating:8.8,notes:""},
+  {id:118,restaurant:"Cent Dix",city:"Ithaca",date:"",dish:"Cheese Plate",emoji:"🧀",rating:8.2,notes:""},
+  {id:119,restaurant:"Cent Dix",city:"Ithaca",date:"",dish:"French Onion Soup",emoji:"🍲",rating:7.9,notes:""},
+  {id:120,restaurant:"Cent Dix",city:"Ithaca",date:"",dish:"Steak Frites",emoji:"🥩",rating:8.9,notes:""},
+  {id:121,restaurant:"Mercato",city:"Ithaca",date:"",dish:"Steak Frites",emoji:"🥩",rating:9.6,notes:""},
+  {id:122,restaurant:"Alléchant",city:"Ithaca",date:"",dish:"Cheese Board",emoji:"🧀",rating:8.2,notes:""},
+  {id:123,restaurant:"Alléchant",city:"Ithaca",date:"",dish:"Blueberry Almond Cake",emoji:"🫐",rating:8.8,notes:""},
+  {id:124,restaurant:"Alléchant",city:"Ithaca",date:"",dish:"Salmon",emoji:"🐠",rating:8.0,notes:""},
+  {id:125,restaurant:"Alléchant",city:"Ithaca",date:"",dish:"Risotto",emoji:"🍚",rating:9.5,notes:""},
+  {id:126,restaurant:"Salt Point",city:"Ithaca",date:"2026-05-22",dish:"Cheese Board",emoji:"🧀",rating:7.3,notes:""},
+  {id:127,restaurant:"Salt Point",city:"Ithaca",date:"2026-05-22",dish:"BBQ Chicken Nachos",emoji:"🍗",rating:7.9,notes:""},
+  {id:128,restaurant:"Salt Point",city:"Ithaca",date:"2026-05-22",dish:"Burrata & Prosciutto",emoji:"🧀",rating:8.3,notes:""},
+  {id:129,restaurant:"Salt Point",city:"Ithaca",date:"2026-05-22",dish:"Nutella Budino",emoji:"🍫",rating:7.4,notes:""},
+  {id:130,restaurant:"Simeon's",city:"Ithaca",date:"",dish:"Spinach & Artichoke Dip",emoji:"🥬",rating:9.4,notes:""},
+  {id:131,restaurant:"Simeon's",city:"Ithaca",date:"",dish:"Steak Frites",emoji:"🥩",rating:8.2,notes:""},
+  {id:132,restaurant:"Simeon's",city:"Ithaca",date:"",dish:"Burger",emoji:"🍔",rating:5.6,notes:""},
+  {id:133,restaurant:"Simeon's",city:"Ithaca",date:"",dish:"Fries",emoji:"🍟",rating:8.0,notes:""},
+];
+
+const DEFAULT_TRY={
+  "NYC — Lunch":[{name:"Commerce Inn"},{name:"Skinny Louie (GF Burger)"},{name:"abcV"},{name:"Sixteen Mill (bakery)"},{name:"Rubirosa"},{name:"The Elk (matcha + coffee)"},{name:"Bubby's"}],
+  "NYC — Dinner":[{name:"Cecchi's",star:true},{name:"Elio's"},{name:"Hoexter's"},{name:"Altro Paradiso"},{name:"Dante NYC"},{name:"Palma"},{name:"Monkey Bar"},{name:"Casa Carmen"},{name:"Giulietta"},{name:"The Corner Store"},{name:"Torrisi"},{name:"Bar Bianchi"},{name:"JoJo"},{name:"Catch"},{name:"Au Cheval"},{name:"The Clocktower"},{name:"The Lobster Club"},{name:"Dudley's"},{name:"Buvette"},{name:"Cucina Alba"},{name:"Raoul's"},{name:"Sartiano's"},{name:"Perry Street"}],
+  "Hamptons":[{name:"Bilboquet"},{name:"Sagaponack General Store"},{name:"Sunlife"},{name:"Sag Coffee"},{name:"East Hampton Grill",star:true},{name:"Duryea's",star:true},{name:"La Fondita"},{name:"Sag Pizza"},{name:"Double's Amagansett"},{name:"Goldberg's"},{name:"Buddah Berry"},{name:"Big Olaf's"},{name:"Camp Rubirosa"},{name:"Jack's Coffee"},{name:"Clam Bar"},{name:"Joni's Montauk"},{name:"Montauk General Store"},{name:"Town Line BBQ"}],
+  "Palm Beach":[{name:"Le Bilboquet"}],
+};
+
+const DEFAULT_TODOS=[
+  {id:1,text:"Clean Charlie's phone",cat:"Misc",done:false},
+  {id:2,text:"Make Pavlova",cat:"To Cook",done:false},
+  {id:3,text:"Make Kladdkaka",cat:"To Cook",done:false},
+  {id:4,text:"Make Choklad bollar",cat:"To Cook",done:false},
+  {id:5,text:"Make Lasagna",cat:"To Cook",done:false},
+  {id:6,text:"Make Tiramisu",cat:"To Cook",done:false},
+  {id:7,text:"Cook White Asparagus",cat:"To Cook",done:false},
+  {id:8,text:"Make Chocolate Mousse (her fav 🍫)",cat:"To Cook",done:false},
+  {id:9,text:"Visit an.me (Sonny store)",cat:"Shopping",done:false},
+  {id:10,text:"West Village Knit & Needle",cat:"Activities",done:false},
+  {id:11,text:"Visit Sixteen Mill",cat:"Shopping",done:false},
+  {id:12,text:"Store of Things",cat:"Shopping",done:false},
+];
+
+const CUISINE_RULES=[
+  {cat:"Italian",emoji:"🍝",kw:/tua|torrisi|cucina|altro|giulietta|palma|rubirosa|sartiano|bar bianchi|jojo|perry street|villa dagmar|astoria|riche|teater|chez jolie|lisa elmqvist|ett hem|mercato|allÃ©chant|cent dix|nightly|buvette|raoul/i},
+  {cat:"Japanese",emoji:"🍣",kw:/nobu|kappo|double knot/i},
+  {cat:"American",emoji:"🍔",kw:/jg melon|croft alley|simeon|timber|salt point|bubby|au cheval|catch|lobster club|monkey bar|corner store|clocktower|dudley|hoexter|elio/i},
+  {cat:"Mexican",emoji:"🌮",kw:/la esquina|casa carmen|la fondita|town line/i},
+  {cat:"Café \/ Bakery",emoji:"☕",kw:/noglu|fabrique|gateau|le gaz|sourseed|elk|sag coffee|jack|sixteen mill/i},
+  {cat:"Seafood",emoji:"🦞",kw:/blue door|buccan|lola|clam bar|duryea|lobster|lisa elmqvist/i},
+  {cat:"European",emoji:"🥩",kw:/bilboquet|perry|corner store/i},
+];
+function guessCuisine(name){for(const r of CUISINE_RULES){if(r.kw.test(name))return r;}return{cat:"Other",emoji:"🍽️"};}
+
+const DRINK_KW=/\bmatcha\b|\bcoffee\b|\blatte\b|\bespresso\b|\btea\b|\bcocktail\b|\bmartini\b|\bwine\b|\bbeer\b|\bsake\b|\bjuice\b|\bsmoothie\b|\bsoda\b|\bcappuccino\b|\bamericano\b|\bflat white\b|\bcold brew\b|\biced coffee\b|\bspritz\b|\bnegroni\b|\bmojito\b|\bmargarita\b|\bdaiquiri\b|\bgin\b|\bvodka\b|\bwhiskey\b|\bchampagne\b|\bprosecco\b|\bhot chocolate\b|\bchai\b|\boolong\b|\bgreen tea\b|\boat milk\b|\bdrink\b|\bbeverage\b|\bboba\b/i;
+const DRINK_CATS={
+  matcha:d=>/\bmatcha\b|\bgreen tea\b|\boat milk\b/i.test(d.dish),
+  coffee:d=>/\bcoffee\b|\blatte\b|\bespresso\b|\bcappuccino\b|\bamericano\b|\bflat white\b|\bcold brew\b/i.test(d.dish),
+  cocktail:d=>/\bcocktail\b|\bmartini\b|\bwine\b|\bbeer\b|\bsake\b|\bspritz\b|\bnegroni\b|\bmojito\b|\bmargarita\b|\bdaiquiri\b|\bgin\b|\bvodka\b|\bwhiskey\b|\bchampagne\b|\bprosecco\b/i.test(d.dish),
+  other:d=>DRINK_KW.test(d.dish)&&!d.dish.match(/\bmatcha\b|\bcoffee\b|\blatte\b|\bespresso\b|\bcappuccino\b|\bamericano\b|\bflat white\b|\bcold brew\b|\bcocktail\b|\bmartini\b|\bwine\b|\bbeer\b|\bsake\b|\bspritz\b|\bnegroni\b|\bmojito\b|\bmargarita\b|\bdaiquiri\b|\bgin\b|\bvodka\b|\bwhiskey\b|\bchampagne\b|\bprosecco\b/i),
+};
+
+// ─── STATE ────────────────────────────────────────────────────────────────────
+const API='https://script.google.com/macros/s/AKfycbxzlho_0KN_u5IMpCKIeoIMcJ0NQVVnJPU78Aw589nUPquecojnds5NHDeME2ytK-46/exec';
+let data=[],tryLists={},todos=[],sortCol='rating',sortDir=-1,cityF='all',ratingF=null,drinkF='all';
+
+async function load(){
+  // tryLists and todos stay local (personal preferences)
+  try{tryLists=JSON.parse(localStorage.getItem('ce_try4')||'null')||JSON.parse(JSON.stringify(DEFAULT_TRY));}catch(e){tryLists=JSON.parse(JSON.stringify(DEFAULT_TRY));}
+  try{todos=JSON.parse(localStorage.getItem('ce_todos')||'null')||JSON.parse(JSON.stringify(DEFAULT_TODOS));}catch(e){todos=JSON.parse(JSON.stringify(DEFAULT_TODOS));}
+  // dishes load from Google Sheets
+  try{
+    const res=await fetch(API);
+    const json=await res.json();
+    if(json.ok&&json.data&&json.data.length>0){
+      data=json.data.map(r=>({id:r.id,dish:String(r.dish||''),restaurant:String(r.restaurant||''),city:String(r.city||''),rating:parseFloat(r.rating)||0,notes:String(r.notes||''),date:String(r.date||''),emoji:String(r.emoji||'🍽️'),type:r.type||'dish'}));
+    } else {
+      // Sheet is empty — seed it with default data
+      data=JSON.parse(JSON.stringify(SEED));
+      syncToSheets();
+    }
+  }catch(e){
+    // Offline fallback
+    try{data=JSON.parse(localStorage.getItem('ce_v4')||'null')||JSON.parse(JSON.stringify(SEED));}catch(e2){data=JSON.parse(JSON.stringify(SEED));}
+    console.warn('Sheets unavailable, using local data',e);
+  }
+}
+function save(){
+  // Save personal tabs locally
+  try{localStorage.setItem('ce_try4',JSON.stringify(tryLists));localStorage.setItem('ce_todos',JSON.stringify(todos));}catch(e){}
+  // Cache dishes locally as fallback, then sync to Sheets
+  try{localStorage.setItem('ce_v4',JSON.stringify(data));}catch(e){}
+  syncToSheets();
+}
+async function syncToSheets(){
+  try{
+    await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'save_all',data:data.map(d=>({id:d.id,dish:d.dish,restaurant:d.restaurant,city:d.city,rating:d.rating,notes:d.notes||'',date:d.date||'',type:d.type||'dish'}))})});
+  }catch(e){console.warn('Sheets sync failed',e);}
+}
+
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
+const avg=arr=>arr.length?arr.reduce((s,x)=>s+x,0)/arr.length:0;
+const avgR=items=>avg(items.map(i=>i.rating));
+const fmt=r=>r.toFixed(1);
+const fmtD=d=>{if(!d)return'';const[,m,dy]=d.split('-');return`${+m}/${+dy}`;};
+function groupBy(arr,key){return arr.reduce((a,i)=>{const k=i[key];(a[k]=a[k]||[]).push(i);return a;},{});}
+function visited(){return new Set(data.map(d=>d.restaurant.toLowerCase().trim()));}
+function rColor(r){if(r>=9)return'#7A35A0';if(r>=8)return'var(--blue)';if(r>=7)return'#6055A0';if(r>=6)return'var(--pink)';return'#9A2525';}
+function badge(r){
+  if(r>=9)return'<span class="badge ba">Amazing</span>';
+  if(r>=8)return'<span class="badge bg2">Really good</span>';
+  if(r>=7)return'<span class="badge bo">Pretty good</span>';
+  if(r>=6)return'<span class="badge bf2">Fine</span>';
+  return'<span class="badge bb2">Bad</span>';
+}
+function tierLabel(r){if(r>=9)return'Amazing';if(r>=8)return'Really good';if(r>=7)return'Pretty good';if(r>=6)return'Fine';return'Pretty bad';}
+const NUMS=['gold','silver','bronze'];
+
+const CATS=[
+  {label:'Steak / meat',fn:d=>/steak|striploin|filet|wagyu|bavette|skewer|rib|beef/i.test(d.dish),fill:'bp'},
+  {label:'Pasta / risotto',fn:d=>/pasta|risotto|spaghetti|rigatoni/i.test(d.dish),fill:'bb'},
+  {label:'Pizza',fn:d=>/pizza/i.test(d.dish),fill:'bpu'},
+  {label:'Sushi / Japanese',fn:d=>/roll|tuna|sushi|crispy rice|yellowtail/i.test(d.dish),fill:'bp'},
+  {label:'Matcha / coffee',fn:d=>/matcha|coffee|latte/i.test(d.dish),fill:'bb'},
+  {label:'Dessert',fn:d=>/mousse|cake|croissant|muffin|ice cream|budino|bun|brûlée|chocolate/i.test(d.dish),fill:'bpu'},
+  {label:'Tacos',fn:d=>/taco/i.test(d.dish),fill:'bp'},
+  {label:'Fries',fn:d=>/fries|frites/i.test(d.dish),fill:'bb'},
+];
+
+// ─── NAVIGATION ──────────────────────────────────────────────────────────────
+function nav(id,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nb').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  if(btn)btn.classList.add('active');
+  ({overview:renderOverview,dishes:renderDishes,drinks:renderDrinks,rankings:renderRankings,recs:renderRecs,totry:renderToTry,todo:renderTodo})[id]?.();
+}
+
+// ─── OVERVIEW ────────────────────────────────────────────────────────────────
+function renderOverview(){
+  const rests=[...new Set(data.map(d=>d.restaurant))].length;
+  const cities=[...new Set(data.filter(d=>d.city).map(d=>d.city))].length;
+  const a=avgR(data);const amazing=data.filter(d=>d.rating>=9);
+  document.getElementById('ov-sub').textContent=`${data.length} dishes · ${rests} restaurants · ${cities} cities`;
+  document.getElementById('ov-stats').innerHTML=`
+    <div class="stat"><div class="sl">Restaurants</div><div class="sv">${rests}</div><div class="ss">${cities} cities explored</div></div>
+    <div class="stat"><div class="sl">Dishes tried</div><div class="sv">${data.length}</div><div class="ss">and counting...</div></div>
+    <div class="stat"><div class="sl">Avg rating</div><div class="sv" style="color:${rColor(a)}">${fmt(a)}</div><div class="ss">out of 10</div></div>
+    <div class="stat"><div class="sl">Amazing (9+)</div><div class="sv" style="color:#7A35A0">${amazing.length}</div><div class="ss">${((amazing.length/data.length)*100).toFixed(0)}% of all dishes</div></div>`;
+
+  const leg=data.filter(d=>d.rating>=9.8).sort((a,b)=>b.rating-a.rating);
+  document.getElementById('ov-leg').innerHTML=`<div class="leg-title">🏆 Legendary Dishes — rated 9.8 or above</div>${leg.map(d=>`
+    <div class="leg-row" onclick="showDish(${d.id})">
+      <div><div class="leg-dish">${d.emoji} ${d.dish}</div><div class="leg-rest">${d.restaurant} · ${d.city}</div></div>
+      <div class="leg-sc">${fmt(d.rating)}</div>
+    </div>`).join('')}`;
+
+  const byR=groupBy(data,'restaurant');
+  const topR=Object.entries(byR).map(([n,items])=>({n,a:avgR(items),city:items[0].city,cnt:items.length})).filter(r=>r.cnt>=2).sort((a,b)=>b.a-a.a).slice(0,7);
+  document.getElementById('ov-rest-meta').textContent=`${topR.length} restaurants with 2+ visits`;
+  document.getElementById('ov-rests').innerHTML=topR.map(r=>`
+    <div class="lr" onclick="showRestaurant('${r.n.replace(/'/g,"\\'")}')">
+      <div><div class="rn">${r.n}</div><div class="rs">${r.city} · ${r.cnt} dishes · ${guessCuisine(r.n).emoji} ${guessCuisine(r.n).cat}</div></div>
+      <div class="rr">${badge(r.a)}<div class="score" style="color:${rColor(r.a)}">${fmt(r.a)}</div></div>
+    </div>`).join('');
+
+  const catData=CATS.map(c=>{const items=data.filter(c.fn);return{label:c.label,a:items.length?avgR(items):0,cnt:items.length,fill:c.fill,fn:c.fn};}).filter(c=>c.cnt>0).sort((a,b)=>b.a-a.a);
+  document.getElementById('ov-cats').innerHTML=catData.map(c=>`
+    <div class="br" onclick="showCategory('${c.label}',CATS[${CATS.findIndex(x=>x.label===c.label)}].fn)">
+      <div class="bh"><span>${c.label}</span><span class="bv" style="color:${rColor(c.a)}">${fmt(c.a)} <span style="font-size:10px;font-weight:400;color:var(--muted)">(${c.cnt} dishes)</span></span></div>
+      <div class="bt"><div class="bf ${c.fill}" style="width:${(c.a/10*100).toFixed(1)}%"></div></div>
+    </div>`).join('');
+
+  const buckets=[{l:'9–10',min:9,max:11},{l:'8–9',min:8,max:9},{l:'7–8',min:7,max:8},{l:'6–7',min:6,max:7},{l:'1–6',min:0,max:6}];
+  const mxB=Math.max(...buckets.map(b=>data.filter(d=>d.rating>=b.min&&d.rating<b.max).length));
+  document.getElementById('ov-dist').innerHTML=buckets.map(b=>{const cnt=data.filter(d=>d.rating>=b.min&&d.rating<b.max).length;return`<div class="dr2"><div class="dl">${b.l}</div><div class="dt"><div class="df" style="width:${mxB?((cnt/mxB)*100).toFixed(0):0}%"></div></div><div class="dc">${cnt}</div></div>`;}).join('');
+
+  const byC=groupBy(data,'city');
+  document.getElementById('ov-cities').innerHTML=Object.entries(byC).map(([city,items])=>({city,a:avgR(items),cnt:items.length})).sort((a,b)=>b.a-a.a).map(c=>`
+    <div class="lr" onclick="showCity('${c.city}')">
+      <div><div class="rn">${c.city}</div><div class="rs">${c.cnt} dishes</div></div>
+      <div class="score" style="color:${rColor(c.a)}">${fmt(c.a)}</div>
+    </div>`).join('');
+
+  const recent=[...data].filter(d=>d.date).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,7);
+  document.getElementById('ov-recent').innerHTML=recent.map(d=>`
+    <div class="lr" onclick="showDish(${d.id})">
+      <div><div class="rn">${d.emoji} ${d.dish}</div><div class="rs">${d.restaurant} · ${fmtD(d.date)}</div></div>
+      <div class="score" style="color:${rColor(d.rating)}">${fmt(d.rating)}</div>
+    </div>`).join('');
+
+  const tiers=[{l:'Amazing (9–10)',min:9,max:11,fill:'bpu'},{l:'Really good (8–9)',min:8,max:9,fill:'bb'},{l:'Pretty good (7–8)',min:7,max:8,fill:'bp'},{l:'Fine (6–7)',min:6,max:7,fill:'bp'},{l:'Bad (<6)',min:0,max:6,fill:'bp'}];
+  const mxT=Math.max(...tiers.map(t=>data.filter(d=>d.rating>=t.min&&d.rating<t.max).length));
+  document.getElementById('ov-tiers').innerHTML=tiers.map(t=>{const cnt=data.filter(d=>d.rating>=t.min&&d.rating<t.max).length;return`<div class="br" style="cursor:default"><div class="bh"><span>${t.l}</span><span class="bv">${cnt} · ${data.length?((cnt/data.length)*100).toFixed(0):0}%</span></div><div class="bt"><div class="bf ${t.fill}" style="width:${mxT?((cnt/mxT)*100).toFixed(0):0}%"></div></div></div>`;}).join('');
+
+  document.getElementById('ov-best-cat').innerHTML=CATS.map(c=>{const items=data.filter(c.fn).sort((a,b)=>b.rating-a.rating);if(!items.length)return'';const d=items[0];return`<div class="lr" onclick="showDish(${d.id})"><div><div class="rn">${d.emoji} ${d.dish}</div><div class="rs">${c.label} · ${d.restaurant}</div></div><div class="score" style="color:${rColor(d.rating)}">${fmt(d.rating)}</div></div>`;}).join('');
+}
+
+// ─── ALL DISHES ───────────────────────────────────────────────────────────────
+function setCityF(city,el){cityF=city;ratingF=null;document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));el.classList.add('active');filterDishes();}
+function setRatingF(type,el){ratingF=type;cityF='all';document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));el.classList.add('active');filterDishes();}
+function srt(col){if(sortCol===col)sortDir*=-1;else{sortCol=col;sortDir=-1;}filterDishes();}
+function filterDishes(){
+  const s=document.getElementById('srch-inp').value.toLowerCase();
+  let f=data.filter(d=>{
+    if(cityF!=='all'&&d.city!==cityF)return false;
+    if(ratingF==='amazing'&&d.rating<9)return false;
+    if(s&&!d.dish.toLowerCase().includes(s)&&!d.restaurant.toLowerCase().includes(s))return false;
+    return true;
+  });
+  f.sort((a,b)=>{let av=a[sortCol],bv=b[sortCol];if(typeof av==='string'){av=av.toLowerCase();bv=bv.toLowerCase();}return av<bv?-sortDir:av>bv?sortDir:0;});
+  document.getElementById('dishes-ct').textContent=`${f.length} of ${data.length} dishes`;
+  document.getElementById('dishes-body').innerHTML=f.map(d=>`
+    <tr class="trow" onclick="showDish(${d.id})">
+      <td>${d.emoji} ${d.dish}${d.notes?`<span style="font-size:11px;color:var(--faint);margin-left:5px">${d.notes}</span>`:''}</td>
+      <td>${d.restaurant}</td>
+      <td><span class="city-tag">${d.city}</span></td>
+      <td style="color:var(--faint)">${fmtD(d.date)}</td>
+      <td style="font-weight:700;color:${rColor(d.rating)}">${fmt(d.rating)}</td>
+      <td>${badge(d.rating)}</td>
+    </tr>`).join('')||'<tr><td colspan="6" style="text-align:center;padding:36px;color:var(--faint)">No dishes match.</td></tr>';
+}
+function renderDishes(){filterDishes();}
+
+// ─── DRINKS ──────────────────────────────────────────────────────────────────
+let drinkFilter='all';
+function setDrinkF(f,el){drinkFilter=f;document.querySelectorAll('#dk-filters .chip').forEach(c=>c.classList.remove('active'));el.classList.add('active');renderDrinks();}
+function renderDrinks(){
+  const allDrinks=data.filter(d=>DRINK_KW.test(d.dish));
+  let drinks=allDrinks;
+  if(drinkFilter!=='all'&&DRINK_CATS[drinkFilter])drinks=allDrinks.filter(DRINK_CATS[drinkFilter]);
+  drinks=[...drinks].sort((a,b)=>b.rating-a.rating);
+  const a=drinks.length?avgR(drinks):0;
+  const best=drinks[0];
+  document.getElementById('dk-sub').textContent=`${drinks.length} drinks logged`;
+  document.getElementById('dk-stats').innerHTML=`
+    <div class="stat"><div class="sl">Drinks tried</div><div class="sv">${allDrinks.length}</div><div class="ss">across all visits</div></div>
+    <div class="stat"><div class="sl">Avg drink rating</div><div class="sv" style="color:${rColor(a||0)}">${drinks.length?fmt(a):'—'}</div><div class="ss">out of 10</div></div>
+    <div class="stat"><div class="sl">Best drink</div><div class="sv" style="font-size:16px;margin-top:2px">${best?best.emoji:'—'}</div><div class="ss">${best?best.dish:'None yet'}</div></div>
+    <div class="stat"><div class="sl">Top spot</div><div class="sv" style="font-size:14px;margin-top:2px">${best?best.restaurant:'—'}</div><div class="ss">${best?best.city:''}</div></div>`;
+  document.getElementById('dk-list').innerHTML=drinks.map(d=>`
+    <div class="lr" onclick="showDish(${d.id})">
+      <div><div class="rn">${d.emoji} ${d.dish}</div><div class="rs">${d.restaurant} · ${d.city}${d.date?' · '+fmtD(d.date):''}</div></div>
+      <div class="rr">${badge(d.rating)}<div class="score" style="color:${rColor(d.rating)}">${fmt(d.rating)}</div></div>
+    </div>`).join('')||'<div style="text-align:center;padding:32px;color:var(--faint)">No drinks in this category yet.</div>';
+}
+
+// ─── RANKINGS ────────────────────────────────────────────────────────────────
+function renderRankings(){
+  const byR=groupBy(data,'restaurant');
+  const rr=Object.entries(byR).map(([n,items])=>({n,a:avgR(items),city:items[0].city,cnt:items.length})).filter(r=>r.cnt>=2).sort((a,b)=>b.a-a.a);
+  document.getElementById('rk-rests').innerHTML=rr.slice(0,10).map((r,i)=>`
+    <div class="rnk" onclick="showRestaurant('${r.n.replace(/'/g,"\\'")}')">
+      <div class="rnum ${NUMS[i]||''}">${i+1}</div>
+      <div style="flex:1"><div class="rn">${r.n}</div><div class="rs">${r.city} · ${r.cnt} dishes</div></div>
+      <div class="score" style="color:${rColor(r.a)}">${fmt(r.a)}</div>
+    </div>`).join('');
+
+  document.getElementById('rk-dishes').innerHTML=[...data].sort((a,b)=>b.rating-a.rating).slice(0,12).map((d,i)=>`
+    <div class="rnk" onclick="showDish(${d.id})">
+      <div class="rnum ${NUMS[i]||''}">${i+1}</div>
+      <div style="flex:1"><div class="rn">${d.emoji} ${d.dish}</div><div class="rs">${d.restaurant}</div></div>
+      <div class="score" style="color:${rColor(d.rating)}">${fmt(d.rating)}</div>
+    </div>`).join('');
+
+  const consistent=Object.entries(byR).map(([n,items])=>{
+    if(items.length<3)return null;
+    const a=avgR(items);const sd=Math.sqrt(avg(items.map(i=>Math.pow(i.rating-a,2))));
+    return{n,a,sd,city:items[0].city,cnt:items.length};
+  }).filter(Boolean).sort((a,b)=>a.sd-b.sd).slice(0,6);
+  document.getElementById('rk-consist').innerHTML=consistent.map((r,i)=>`
+    <div class="rnk" onclick="showRestaurant('${r.n.replace(/'/g,"\\'")}')">
+      <div class="rnum ${NUMS[i]||''}">${i+1}</div>
+      <div style="flex:1"><div class="rn">${r.n}</div><div class="rs">${r.city} · ±${fmt(r.sd)} std dev</div></div>
+      <div class="score" style="color:${rColor(r.a)}">${fmt(r.a)}</div>
+    </div>`).join('');
+
+  document.getElementById('rk-cities').innerHTML=Object.entries(groupBy(data,'city')).map(([city,items])=>({city,a:avgR(items),cnt:items.length})).sort((a,b)=>b.a-a.a).map((c,i)=>`
+    <div class="rnk" onclick="showCity('${c.city}')">
+      <div class="rnum ${NUMS[i]||''}">${i+1}</div>
+      <div style="flex:1"><div class="rn">${c.city}</div><div class="rs">${c.cnt} dishes</div></div>
+      <div class="score" style="color:${rColor(c.a)}">${fmt(c.a)}</div>
+    </div>`).join('');
+}
+
+// ─── RECS ─────────────────────────────────────────────────────────────────────
+function buildProfile(){
+  const prof={};const byR=groupBy(data,'restaurant');
+  Object.entries(byR).forEach(([name,items])=>{
+    const c=guessCuisine(name);
+    if(!prof[c.cat])prof[c.cat]={cat:c.cat,emoji:c.emoji,ratings:[],rests:[]};
+    prof[c.cat].ratings.push(...items.map(i=>i.rating));
+    prof[c.cat].rests.push(name);
+  });
+  return Object.values(prof).map(p=>({...p,avg:avg(p.ratings),count:p.ratings.length})).sort((a,b)=>b.avg-a.avg);
+}
+function renderRecs(){
+  const profile=buildProfile();
+  document.getElementById('taste-grid').innerHTML=profile.slice(0,6).map(p=>`
+    <div class="tc"><div class="te">${p.emoji}</div><div class="tcn">${p.cat}</div><div class="tcs" style="color:${rColor(p.avg)}">${fmt(p.avg)}</div><div class="tcm">${p.count} dishes · ${p.rests.length} spots</div></div>`).join('');
+
+  const v=visited();
+  const allTry=[];
+  Object.entries(tryLists).forEach(([section,items])=>{
+    const city=section.includes('NYC')?'NYC':section.includes('Hamptons')?'Hamptons':section.includes('Palm Beach')?'Palm Beach':'NYC';
+    items.forEach(item=>{
+      if(v.has(item.name.toLowerCase().trim()))return;
+      const c=guessCuisine(item.name);
+      const cm=profile.find(p=>p.cat===c.cat);
+      const score=Math.min(1,(cm?(cm.avg/10):0.75)*0.85+(item.star?0.08:0)+0.05);
+      allTry.push({name:item.name,city,star:!!item.star,section,score,cuisine:c,reasons:cm?[`Avg ${fmt(cm.avg)} on ${c.cat}`,...(item.star?['Priority pick']:[])]:['New cuisine to explore']});
+    });
+  });
+  allTry.sort((a,b)=>b.score-a.score);
+  document.getElementById('rec-cards').innerHTML=allTry.slice(0,12).map((r,i)=>`
+    <div class="rc ${i<3?'top':''}">
+      ${r.star?'<div style="font-size:11px;color:var(--gold);font-weight:600;margin-bottom:4px">⭐ Priority</div>':''}
+      <div class="rc-name">${r.name}</div>
+      <div class="rc-city">${r.section}</div>
+      <div class="rc-bar"><div class="rc-track"><div class="rc-fill" style="width:${(r.score*100).toFixed(0)}%"></div></div><div class="rc-pct">${(r.score*100).toFixed(0)}%</div></div>
+      <div class="rc-reason">${r.cuisine.emoji} ${r.reasons.join(' · ')}</div>
+    </div>`).join('');
+
+  const tried=new Set(profile.map(p=>p.cat));
+  const weak=profile.filter(p=>p.avg<7.5&&p.count>=3);
+  document.getElementById('rec-explore').innerHTML=`<div style="padding:4px 0">${weak.length?`<div style="font-size:13px;font-weight:600;margin-bottom:6px;margin-top:4px">Categories to improve on</div>${weak.map(p=>`<div style="font-size:13px;color:var(--mid);padding:4px 0">${p.emoji} <strong>${p.cat}</strong> — avg ${fmt(p.avg)} · try finding a better spot</div>`).join('')}`:'<div style="font-size:13px;color:var(--muted);padding:8px 0">You rate everything pretty highly — no weak spots yet!</div>'}</div>`;
+}
+
+// ─── TO TRY ──────────────────────────────────────────────────────────────────
+function renderToTry(){
+  const v=visited();
+  document.getElementById('totry-content').innerHTML=Object.entries(tryLists).map(([section,items])=>{
+    const done=items.filter(i=>v.has(i.name.toLowerCase().trim())).length;
+    const sid=section.replace(/[^a-zA-Z0-9]/g,'_');
+    const city=section.includes('NYC')?'NYC':section.includes('Hamptons')?'Hamptons':section.includes('Palm Beach')?'Palm Beach':'NYC';
+    return`<div class="try-section">
+      <div class="try-sh"><div class="try-title">${section}<span class="try-pill">${done}/${items.length} visited</span></div></div>
+      <div class="try-grid">${items.map(item=>{
+        const isV=v.has(item.name.toLowerCase().trim());
+        return`<div class="try-item ${isV?'visited':''}" onclick="tryClick('${item.name.replace(/'/g,"\\'")}','${city}')">
+          <div class="try-chk">${isV?'✓':''}</div>
+          <div class="try-name">${item.name}${item.star?' ⭐':''}</div>
+        </div>`;}).join('')}</div>
+      <div class="try-add">
+        <input type="text" placeholder="Add a place..." id="add-${sid}" onkeydown="if(event.key==='Enter')addTry('${section}','${sid}')" />
+        <button onclick="addTry('${section}','${sid}')">+ Add</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+function tryClick(name,city){openModal(name,city);}
+function addTry(section,sid){
+  const inp=document.getElementById('add-'+sid);const name=inp.value.trim();if(!name)return;
+  tryLists[section].push({name});save();inp.value='';renderToTry();
+}
+
+// ─── TO DO ───────────────────────────────────────────────────────────────────
+function renderTodo(){
+  const cats=[...new Set(todos.map(t=>t.cat))];
+  document.getElementById('todo-content').innerHTML=cats.map(cat=>{
+    const items=todos.filter(t=>t.cat===cat);
+    return`<div class="todo-section">
+      <div class="sc">
+        <div class="sc-head"><h3>${cat}</h3><span class="sc-meta">${items.filter(t=>t.done).length}/${items.length} done</span></div>
+        <div class="sc-body" style="padding-top:10px">
+          ${items.map(t=>`
+            <div class="todo-item ${t.done?'done':''}" id="todo-${t.id}">
+              <div class="todo-chk" onclick="toggleTodo(${t.id})">${t.done?'✓':''}</div>
+              <div class="todo-text">${t.text}</div>
+              <button class="cal-btn" onclick="addToCalendar('${t.text.replace(/'/g,"\\'")}')">📅 Calendar</button>
+            </div>`).join('')}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+function toggleTodo(id){
+  const t=todos.find(x=>x.id===id);if(t){t.done=!t.done;save();renderTodo();}
+}
+function addTodo(){
+  const inp=document.getElementById('todo-inp');const cat=document.getElementById('todo-cat').value;
+  const text=inp.value.trim();if(!text)return;
+  todos.push({id:Date.now(),text,cat,done:false});save();inp.value='';renderTodo();
+}
+function addToCalendar(text){
+  const url=`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(text)}&details=${encodeURIComponent('Added from C+E Spots')}`;
+  window.open(url,'_blank');
+}
+
+// ─── DETAIL PANEL ────────────────────────────────────────────────────────────
+function openPanel(){document.getElementById('panel-bg').classList.add('open');document.getElementById('detail-panel').classList.add('open');}
+function closePanel(){document.getElementById('panel-bg').classList.remove('open');document.getElementById('detail-panel').classList.remove('open');}
+
+function showRestaurant(name){
+  const items=data.filter(d=>d.restaurant===name);if(!items.length)return;
+  const a=avgR(items),city=items[0].city,cuisine=guessCuisine(name);
+  const dates=[...new Set(items.filter(d=>d.date).map(d=>fmtD(d.date)))].join(', ');
+  const best=[...items].sort((a,b)=>b.rating-a.rating)[0];
+  const worst=[...items].sort((a,b)=>a.rating-b.rating)[0];
+  document.getElementById('dp-cuisine').textContent=`${cuisine.emoji} ${cuisine.cat}`;
+  document.getElementById('dp-name').textContent=name;
+  document.getElementById('dp-meta').textContent=`${city}${dates?' · '+dates:''}`;
+  document.getElementById('dp-score').textContent=fmt(a);
+  document.getElementById('dp-score').style.color=rColor(a);
+  document.getElementById('dp-score-lbl').textContent='avg rating';
+  document.getElementById('dp-badge').innerHTML=badge(a);
+  document.getElementById('dp-body').innerHTML=`
+    <div class="dp-stat-grid">
+      <div class="dp-stat"><div class="dp-stat-l">Dishes tried</div><div class="dp-stat-v">${items.length}</div></div>
+      <div class="dp-stat"><div class="dp-stat-l">Amazing (9+)</div><div class="dp-stat-v" style="color:#7A35A0">${items.filter(d=>d.rating>=9).length}</div></div>
+      <div class="dp-stat"><div class="dp-stat-l">Highest</div><div class="dp-stat-v" style="color:${rColor(best.rating)}">${fmt(best.rating)}</div></div>
+      <div class="dp-stat"><div class="dp-stat-l">Lowest</div><div class="dp-stat-v" style="color:${rColor(worst.rating)}">${fmt(worst.rating)}</div></div>
+    </div>
+    <div class="dp-sec">Best dish</div>
+    <div class="dp-highlight"><div class="dp-hl">⭐ Top pick</div><div style="font-size:14px;font-weight:500">${best.emoji} ${best.dish}</div><div style="font-size:13px;color:var(--pink);font-weight:600;margin-top:3px">${fmt(best.rating)} · ${tierLabel(best.rating)}</div></div>
+    <div class="dp-sec">All dishes</div>
+    ${[...items].sort((a,b)=>b.rating-a.rating).map(d=>`
+      <div class="dp-dish" onclick="showDish(${d.id})">
+        <div class="dp-dish-name">${d.emoji} ${d.dish}${d.notes?`<span style="font-size:11px;color:var(--faint);margin-left:4px">${d.notes}</span>`:''}</div>
+        <div style="display:flex;align-items:center;gap:6px">${badge(d.rating)}<div class="dp-dish-sc" style="color:${rColor(d.rating)}">${fmt(d.rating)}</div></div>
+      </div>`).join('')}`;
+  openPanel();
+}
+
+function showDish(dishId){
+  const d=data.find(x=>x.id==dishId);if(!d)return;
+  const restItems=data.filter(x=>x.restaurant===d.restaurant);
+  const restAvg=avgR(restItems),cuisine=guessCuisine(d.restaurant);
+  const rank=[...restItems].sort((a,b)=>b.rating-a.rating).findIndex(x=>x.id==dishId)+1;
+  document.getElementById('dp-cuisine').textContent=`${cuisine.emoji} ${cuisine.cat}`;
+  document.getElementById('dp-name').textContent=`${d.emoji} ${d.dish}`;
+  document.getElementById('dp-meta').textContent=`${d.restaurant} · ${d.city}${d.date?' · '+fmtD(d.date):''}`;
+  document.getElementById('dp-score').textContent=fmt(d.rating);
+  document.getElementById('dp-score').style.color=rColor(d.rating);
+  document.getElementById('dp-score-lbl').textContent=`/ 10 · ${tierLabel(d.rating)}`;
+  document.getElementById('dp-badge').innerHTML=badge(d.rating);
+  document.getElementById('dp-body').innerHTML=`
+    <div class="dp-stat-grid">
+      <div class="dp-stat"><div class="dp-stat-l">Restaurant avg</div><div class="dp-stat-v" style="color:${rColor(restAvg)}">${fmt(restAvg)}</div></div>
+      <div class="dp-stat"><div class="dp-stat-l">Rank at ${d.restaurant.split(' ')[0]}</div><div class="dp-stat-v">#${rank} of ${restItems.length}</div></div>
+      <div class="dp-stat"><div class="dp-stat-l">City</div><div class="dp-stat-v" style="font-size:13px">${d.city}</div></div>
+      <div class="dp-stat"><div class="dp-stat-l">Cuisine</div><div class="dp-stat-v" style="font-size:13px">${cuisine.cat}</div></div>
+    </div>
+    ${d.notes?`<div style="margin-top:12px;padding:9px 12px;background:var(--blue-l);border-radius:8px;font-size:13px;color:#3A5A8A">💬 ${d.notes}</div>`:''}
+    <div class="dp-sec" style="margin-top:${d.notes?12:16}px">Everything at ${d.restaurant}</div>
+    ${[...restItems].sort((a,b)=>b.rating-a.rating).map(x=>`
+      <div class="dp-dish" onclick="showDish(${x.id})" style="${x.id==dishId?'background:var(--pink-l);border-radius:8px;margin:0 -6px;padding:7px 6px;':''}">
+        <div class="dp-dish-name" style="${x.id==dishId?'font-weight:600;':''}">${x.id==dishId?'→ ':''}${x.emoji} ${x.dish}</div>
+        <div style="display:flex;align-items:center;gap:6px">${badge(x.rating)}<div class="dp-dish-sc" style="color:${rColor(x.rating)}">${fmt(x.rating)}</div></div>
+      </div>`).join('')}`;
+  openPanel();
+}
+
+function showCategory(label,fn){
+  const items=data.filter(fn).sort((a,b)=>b.rating-a.rating);
+  const a=avgR(items),best=items[0];
+  document.getElementById('dp-cuisine').textContent='Category';
+  document.getElementById('dp-name').textContent=label;
+  document.getElementById('dp-meta').textContent=`${items.length} dishes tried`;
+  document.getElementById('dp-score').textContent=fmt(a);
+  document.getElementById('dp-score').style.color=rColor(a);
+  document.getElementById('dp-score-lbl').textContent='avg rating';
+  document.getElementById('dp-badge').innerHTML=badge(a);
+  document.getElementById('dp-body').innerHTML=`
+    <div class="dp-stat-grid">
+      <div class="dp-stat"><div class="dp-stat-l">Amazing (9+)</div><div class="dp-stat-v" style="color:#7A35A0">${items.filter(d=>d.rating>=9).length}</div></div>
+      <div class="dp-stat"><div class="dp-stat-l">Total dishes</div><div class="dp-stat-v">${items.length}</div></div>
+    </div>
+    ${best?`<div class="dp-sec">Best in category</div><div class="dp-highlight"><div class="dp-hl">⭐ Top pick</div><div style="font-size:14px;font-weight:500">${best.emoji} ${best.dish}</div><div style="font-size:13px;color:var(--pink);font-weight:600;margin-top:2px">${best.restaurant} · ${fmt(best.rating)}</div></div>`:''}
+    <div class="dp-sec">All dishes, ranked</div>
+    ${items.map(d=>`<div class="dp-dish" onclick="showDish(${d.id})"><div><div class="dp-dish-name">${d.emoji} ${d.dish}</div><div style="font-size:11px;color:var(--muted);margin-top:2px">${d.restaurant} · ${d.city}</div></div><div style="display:flex;align-items:center;gap:6px">${badge(d.rating)}<div class="dp-dish-sc" style="color:${rColor(d.rating)}">${fmt(d.rating)}</div></div></div>`).join('')}`;
+  openPanel();
+}
+
+function showCity(city){
+  const items=data.filter(d=>d.city===city);const a=avgR(items);
+  const byR=groupBy(items,'restaurant');
+  const restList=Object.entries(byR).map(([n,it])=>({n,a:avgR(it),cnt:it.length})).sort((a,b)=>b.a-a.a);
+  const best=[...items].sort((a,b)=>b.rating-a.rating)[0];
+  document.getElementById('dp-cuisine').textContent='📍 City';
+  document.getElementById('dp-name').textContent=city;
+  document.getElementById('dp-meta').textContent=`${items.length} dishes · ${restList.length} restaurants`;
+  document.getElementById('dp-score').textContent=fmt(a);
+  document.getElementById('dp-score').style.color=rColor(a);
+  document.getElementById('dp-score-lbl').textContent='avg rating';
+  document.getElementById('dp-badge').innerHTML=badge(a);
+  document.getElementById('dp-body').innerHTML=`
+    <div class="dp-stat-grid">
+      <div class="dp-stat"><div class="dp-stat-l">Restaurants</div><div class="dp-stat-v">${restList.length}</div></div>
+      <div class="dp-stat"><div class="dp-stat-l">Amazing dishes</div><div class="dp-stat-v" style="color:#7A35A0">${items.filter(d=>d.rating>=9).length}</div></div>
+    </div>
+    ${best?`<div class="dp-sec">Best dish here</div><div class="dp-highlight"><div class="dp-hl">⭐ Top pick</div><div style="font-size:14px;font-weight:500">${best.emoji} ${best.dish}</div><div style="font-size:13px;color:var(--pink);font-weight:600;margin-top:2px">${best.restaurant} · ${fmt(best.rating)}</div></div>`:''}
+    <div class="dp-sec">Restaurants, ranked</div>
+    ${restList.map((r,i)=>`<div class="dp-dish" onclick="showRestaurant('${r.n.replace(/'/g,"\\'")}')"><div><div class="dp-dish-name">${guessCuisine(r.n).emoji} ${r.n}</div><div style="font-size:11px;color:var(--muted);margin-top:2px">${r.cnt} dishes</div></div><div style="display:flex;align-items:center;gap:6px">${badge(r.a)}<div class="dp-dish-sc" style="color:${rColor(r.a)}">${fmt(r.a)}</div></div></div>`).join('')}`;
+  openPanel();
+}
+
+document.getElementById('panel-bg').addEventListener('click',closePanel);
+
+// ─── MODAL ───────────────────────────────────────────────────────────────────
+let dishCount=0;
+function handleCityChange(){
+  const sel=document.getElementById('f-city');
+  document.getElementById('f-city-custom').style.display=sel.value==='__custom__'?'block':'none';
+}
+function openModal(prefillName,prefillCity){
+  document.getElementById('modal-overlay').classList.add('open');
+  document.getElementById('f-date').value=new Date().toISOString().split('T')[0];
+  document.getElementById('f-rest').value=prefillName||'';
+  document.getElementById('modal-title').textContent=prefillName?'Log Your Visit':'Log a Visit';
+  document.getElementById('modal-sub').textContent=prefillName?`You went to ${prefillName}! Add what you had and rate each dish.`:'Fill in the restaurant and rate each dish you tried.';
+  if(prefillCity){const sel=document.getElementById('f-city');[...sel.options].forEach(o=>{if(o.value===prefillCity)sel.value=prefillCity;});}
+  document.getElementById('f-city-custom').style.display='none';
+  dishCount=0;document.getElementById('dish-list').innerHTML='';addDishRow();
+  document.getElementById('f-notes').value='';
+}
+function closeModal(){document.getElementById('modal-overlay').classList.remove('open');}
+function addDishRow(){
+  dishCount++;const row=document.createElement('div');row.className='dish-row';row.id='dr-'+dishCount;
+  row.innerHTML=`<input type="text" placeholder="e.g. Crispy Rice" class="dn" /><input type="text" placeholder="🍽️" class="de" maxlength="2" style="text-align:center;font-size:15px;padding:7px 3px" /><input type="number" placeholder="8.5" min="1" max="10" step="0.1" class="dr" /><button class="rm-btn" onclick="document.getElementById('dr-${dishCount}').remove()">×</button>`;
+  document.getElementById('dish-list').appendChild(row);
+}
+function saveEntry(){
+  const restRaw=document.getElementById('f-rest').value.trim();
+  const cityVal=document.getElementById('f-city').value;
+  const city=cityVal==='__custom__'?(document.getElementById('f-city-custom').value.trim()||'Other'):cityVal;
+  const date=document.getElementById('f-date').value;
+  const notes=document.getElementById('f-notes').value.trim();
+  if(!restRaw){alert('Please enter a restaurant name.');return;}
+  let added=0;
+  document.querySelectorAll('.dish-row').forEach(row=>{
+    const dish=row.querySelector('.dn').value.trim();
+    const emoji=row.querySelector('.de').value.trim()||'🍽️';
+    const rating=parseFloat(row.querySelector('.dr').value);
+    if(!dish||isNaN(rating)||rating<1||rating>10)return;
+    data.push({id:Date.now()+Math.random(),restaurant:restRaw,city,date,dish,emoji,rating,notes});
+    added++;
+  });
+  if(!added){alert('Add at least one dish with a name and rating (1–10).');return;}
+  save();closeModal();renderOverview();
+  if(document.getElementById('page-totry').classList.contains('active'))renderToTry();
+  if(document.getElementById('page-drinks').classList.contains('active'))renderDrinks();
+}
+document.getElementById('modal-overlay').addEventListener('click',e=>{if(e.target.id==='modal-overlay')closeModal();});
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+load().then(()=>{
+  document.getElementById('loading-overlay').style.display='none';
+  renderOverview();
+});
+</script>
+</body>
+</html>
