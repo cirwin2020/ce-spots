@@ -156,6 +156,18 @@ tr.trow:hover td{background:#FDF7FD;cursor:pointer}
 .rc-pct{font-size:12px;font-weight:600;color:var(--pink);min-width:32px;text-align:right}
 .rc-reason{font-size:11px;color:var(--muted);line-height:1.5}
 
+/* EXPLORE RECS */
+.explore-tastes{font-size:13px;color:var(--mid);line-height:1.6;margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--border)}
+.explore-tastes strong{color:var(--pink);font-weight:600}
+.explore-rec{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid #F5EEF5}
+.explore-rec:last-child{border-bottom:none}
+.explore-rec-name{font-size:14px;font-weight:600;color:var(--text);margin-bottom:3px}
+.explore-rec-meta{font-size:11px;color:var(--pink);margin-bottom:5px}
+.explore-rec-reason{font-size:12px;color:var(--muted);line-height:1.5}
+.explore-add-btn{width:34px;height:34px;border-radius:50%;border:1.5px solid var(--pink);background:#fff;color:var(--pink);font-size:20px;line-height:1;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:inherit;transition:all .15s}
+.explore-add-btn:hover{background:var(--pink);color:#fff}
+.explore-on-list{font-size:11px;color:var(--muted);white-space:nowrap;padding:8px 4px;flex-shrink:0}
+
 /* TO TRY */
 .try-section{margin-bottom:22px}
 .try-sh{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
@@ -352,7 +364,7 @@ tr.trow:hover td{background:#FDF7FD;cursor:pointer}
   <div class="sc"><div class="sc-head"><h3>Top Picks from Your List</h3><span class="sc-meta">based on what you love</span></div><div class="sc-body" style="padding-top:12px">
     <div class="rec-grid" id="rec-cards"></div>
   </div></div>
-  <div class="sc"><div class="sc-head"><h3>Explore Something New</h3></div><div class="sc-body" id="rec-explore"></div></div>
+  <div class="sc"><div class="sc-head"><h3>Explore Something New</h3><span class="sc-meta">based on dishes you love</span></div><div class="sc-body" id="rec-explore"></div></div>
 </div>
 
 <!-- TO TRY -->
@@ -577,6 +589,13 @@ const DEFAULT_TRY={
   "Palm Beach":[{name:"Le Bilboquet"}],
 };
 
+const RECOMMENDATION_POOL={
+  "NYC — Dinner":[{name:"Via Carota"},{name:"Lilia"},{name:"I Sodi"},{name:"Rezdôra"},{name:"Roscioli"},{name:"4 Charles Prime Rib"}],
+  "NYC — Lunch":[{name:"La Cabra"},{name:"Librae Bakery"},{name:"Sadelle's"}],
+  "Hamptons":[{name:"Calissa"},{name:"Topping Rose"},{name:"Morgan's Fork"}],
+  "Palm Beach":[{name:"Renato's"},{name:"Casa Bella"}],
+};
+
 const DEFAULT_TODOS=[
   {id:1,text:"Clean Charlie's phone",cat:"Misc",done:false},
   {id:2,text:"Make Pavlova",cat:"To Cook",done:false},
@@ -696,6 +715,100 @@ const CATS=[
   {label:'Tacos',fn:d=>/taco/i.test(d.dish),fill:'bp'},
   {label:'Fries',fn:d=>/fries|frites/i.test(d.dish),fill:'bb'},
 ];
+
+const CUISINE_TO_DISHES={
+  'Italian':['Pizza','Pasta / risotto','Dessert'],
+  'Japanese':['Sushi / Japanese'],
+  'American':['Steak / meat','Fries','Tacos'],
+  'Mexican':['Tacos'],
+  'Café / Bakery':['Matcha / coffee','Dessert'],
+  'Seafood':['Sushi / Japanese','Steak / meat'],
+  'European':['Steak / meat','Dessert'],
+  'Other':[],
+};
+
+function dishHintsFromName(name){
+  const n=name.toLowerCase(),hints=[];
+  if(/pizza|rubirosa|camp rubirosa|sag pizza/i.test(n))hints.push('Pizza');
+  if(/matcha|coffee|elk|gaz|mill|jack/i.test(n))hints.push('Matcha / coffee');
+  if(/taco|mexican|carmen|fondita|esquina/i.test(n))hints.push('Tacos');
+  if(/sushi|nobu|japanese|kappo/i.test(n))hints.push('Sushi / Japanese');
+  if(/steak|grill|chophouse|au cheval|melon/i.test(n))hints.push('Steak / meat');
+  if(/bakery|bubby|gateau|fabrique|sixteen mill/i.test(n))hints.push('Dessert');
+  return hints;
+}
+
+function buildDishProfile(){
+  return CATS.map(c=>{
+    const items=data.filter(c.fn);
+    const sorted=[...items].sort((a,b)=>b.rating-a.rating);
+    return{label:c.label,avg:items.length?avgR(items):0,count:items.length,top:sorted[0]||null};
+  }).filter(c=>c.count>0).sort((a,b)=>b.avg-a.avg);
+}
+
+function isOnTryList(name){
+  const key=name.toLowerCase().trim();
+  return Object.values(tryLists).some(items=>items.some(i=>i.name.toLowerCase().trim()===key));
+}
+
+function sectionToCity(section){
+  if(section.includes('Hamptons'))return'Hamptons';
+  if(section.includes('Palm Beach'))return'Palm Beach';
+  if(section.includes('NYC'))return'NYC';
+  return'NYC';
+}
+
+function buildExploreRecs(){
+  const v=visited();
+  const dishProfile=buildDishProfile();
+  const topDishes=dishProfile.filter(d=>d.avg>=8).slice(0,5);
+  const lovedRests=Object.entries(groupBy(data,'restaurant')).map(([n,items])=>({n,a:avgR(items),c:guessCuisine(n),city:items[0].city,cnt:items.length})).filter(r=>r.a>=8.8&&r.cnt>=1).sort((a,b)=>b.a-a.a).slice(0,6);
+  const pool=[];
+  Object.entries(DEFAULT_TRY).forEach(([section,items])=>items.forEach(item=>pool.push({name:item.name,section,star:!!item.star})));
+  Object.entries(RECOMMENDATION_POOL).forEach(([section,items])=>items.forEach(item=>pool.push({name:item.name,section,star:false})));
+  const seen=new Set();
+  const candidates=[];
+  pool.forEach(item=>{
+    const key=item.name.toLowerCase().trim();
+    if(v.has(key)||seen.has(key))return;
+    seen.add(key);
+    const cuisine=guessCuisine(item.name);
+    const dishHints=[...new Set([...(CUISINE_TO_DISHES[cuisine.cat]||[]),...dishHintsFromName(item.name)])];
+    let score=0;const reasons=[];
+    topDishes.forEach(d=>{
+      if(!dishHints.includes(d.label))return;
+      const weight=d.avg>=9?1.25:d.avg>=8?1.05:0.85;
+      score+=(d.avg/10)*weight*(1+Math.min(d.count,4)*0.08);
+      if(d.top)reasons.push(`You avg ${fmt(d.avg)} on ${d.label.toLowerCase()} · loved ${d.top.dish}`);
+      else reasons.push(`You avg ${fmt(d.avg)} on ${d.label.toLowerCase()}`);
+    });
+    lovedRests.forEach(r=>{
+      if(r.c.cat===cuisine.cat&&r.c.cat!=='Other'){
+        score+=0.12;
+        reasons.push(`Similar to ${r.n} (${fmt(r.a)})`);
+      }
+    });
+    if(item.star){score+=0.15;reasons.push('Priority pick on our list');}
+    const city=sectionToCity(item.section);
+    const cityDishes=data.filter(d=>d.city===city);
+    if(cityDishes.length>=3&&avgR(cityDishes)>=8.5)score+=0.06;
+    if(score<=0)return;
+    candidates.push({name:item.name,section:item.section,city,score,cuisine,reasons:[...new Set(reasons)].slice(0,2),onList:isOnTryList(item.name)});
+  });
+  return{candidates:candidates.sort((a,b)=>b.score-a.score).slice(0,10),dishProfile:topDishes};
+}
+
+function addRecToTry(name,section){
+  const key=name.toLowerCase().trim();
+  if(isOnTryList(name))return;
+  if(!tryLists[section])tryLists[section]=[];
+  tryLists[section].push({name});
+  save();
+  renderRecs();
+  if(document.getElementById('page-totry').classList.contains('active'))renderToTry();
+}
+
+function escJs(s){return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'");}
 
 // ─── NAVIGATION ──────────────────────────────────────────────────────────────
 function nav(id,btn){
@@ -884,9 +997,20 @@ function renderRecs(){
       <div class="rc-reason">${r.cuisine.emoji} ${r.reasons.join(' · ')}</div>
     </div>`).join('');
 
-  const tried=new Set(profile.map(p=>p.cat));
-  const weak=profile.filter(p=>p.avg<7.5&&p.count>=3);
-  document.getElementById('rec-explore').innerHTML=`<div style="padding:4px 0">${weak.length?`<div style="font-size:13px;font-weight:600;margin-bottom:6px;margin-top:4px">Categories to improve on</div>${weak.map(p=>`<div style="font-size:13px;color:var(--mid);padding:4px 0">${p.emoji} <strong>${p.cat}</strong> — avg ${fmt(p.avg)} · try finding a better spot</div>`).join('')}`:'<div style="font-size:13px;color:var(--muted);padding:8px 0">You rate everything pretty highly — no weak spots yet!</div>'}</div>`;
+  const{ candidates, dishProfile }=buildExploreRecs();
+  const tasteLine=dishProfile.length?dishProfile.slice(0,4).map(d=>`<strong>${d.label}</strong> (${fmt(d.avg)})`).join(' · '):'Log a few more dishes to build your taste profile';
+  const recCards=candidates.length?candidates.map(r=>`
+    <div class="explore-rec">
+      <div style="flex:1;min-width:0">
+        <div class="explore-rec-name">${r.name}</div>
+        <div class="explore-rec-meta">${r.section} · ${r.cuisine.emoji} ${r.cuisine.cat}</div>
+        <div class="explore-rec-reason">${r.reasons.join(' · ')}</div>
+      </div>
+      ${r.onList?'<span class="explore-on-list">On your list</span>':`<button type="button" class="explore-add-btn" title="Add to To Try" onclick="addRecToTry('${escJs(r.name)}','${escJs(r.section)}')">+</button>`}
+    </div>`).join(''):'<div style="font-size:13px;color:var(--muted);padding:8px 0">No new picks yet — log more visits to sharpen recommendations.</div>';
+  document.getElementById('rec-explore').innerHTML=`
+    <div class="explore-tastes">Based on what you rate highest: ${tasteLine}</div>
+    ${recCards}`;
 }
 
 // ─── TO TRY ──────────────────────────────────────────────────────────────────
