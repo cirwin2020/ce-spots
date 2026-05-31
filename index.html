@@ -155,12 +155,6 @@ tr.trow:hover td{background:#FDF7FD;cursor:pointer}
 .rc-fill{height:100%;border-radius:3px;background:var(--pink)}
 .rc-pct{font-size:12px;font-weight:600;color:var(--pink);min-width:32px;text-align:right}
 .rc-reason{font-size:11px;color:var(--muted);line-height:1.5}
-.info-box{background:var(--blue-l);border:1px solid var(--blue-b);border-radius:var(--r);padding:16px 18px}
-.info-box h3{font-size:13px;font-weight:600;color:#1A3A7A;margin-bottom:7px}
-.info-box p,.info-box li{font-size:12px;color:#3A5A8A;line-height:1.7}
-.info-box ul{padding-left:16px}
-.api-pill{display:inline-flex;font-size:10px;padding:2px 8px;border-radius:20px;font-weight:500;margin:1px 3px}
-.apg{background:#EBF5E0;color:#3A6E10} .apy{background:#FEF8E0;color:#8A6A00} .apgr{background:#F0EEF8;color:#555}
 
 /* TO TRY */
 .try-section{margin-bottom:22px}
@@ -359,16 +353,6 @@ tr.trow:hover td{background:#FDF7FD;cursor:pointer}
     <div class="rec-grid" id="rec-cards"></div>
   </div></div>
   <div class="sc"><div class="sc-head"><h3>Explore Something New</h3></div><div class="sc-body" id="rec-explore"></div></div>
-  <div class="info-box" style="margin-top:14px">
-    <h3>🔌 Want live restaurant data?</h3>
-    <ul>
-      <li><strong>Yelp Fusion API</strong> <span class="api-pill apg">✓ Best option</span> — Free trial. Returns star rating, price range, cuisine tags. Easy to add.</li>
-      <li><strong>Google Places API</strong> <span class="api-pill apy">Paid after free tier</span> — Very comprehensive ratings + hours + photos.</li>
-      <li><strong>OpenTable</strong> <span class="api-pill apy">Partner approval required</span> — Food/service/ambience split ratings.</li>
-      <li><strong>Beli</strong> <span class="api-pill apgr">No public API</span> · <strong>Toast</strong> <span class="api-pill apgr">Restaurant POS only</span></li>
-    </ul>
-    <p style="margin-top:10px"><strong>Recommendation:</strong> Start with Yelp — free, sign up at developer.yelp.com, and we can add "Yelp: 4.5 ⭐ · $$$" to each restaurant card.</p>
-  </div>
 </div>
 
 <!-- TO TRY -->
@@ -379,7 +363,7 @@ tr.trow:hover td{background:#FDF7FD;cursor:pointer}
 
 <!-- TO DO -->
 <div id="page-todo" class="page">
-  <div class="ph"><h1>To Do</h1><p>Tasks, things to make, places to see. Click 📅 to add to Google Calendar.</p></div>
+  <div class="ph"><h1>To Do</h1><p>Tasks, things to make, places to see.</p></div>
   <div id="todo-content"></div>
   <div class="sc" style="margin-top:8px">
     <div class="sc-head"><h3>Add a Task</h3></div>
@@ -396,10 +380,6 @@ tr.trow:hover td{background:#FDF7FD;cursor:pointer}
         <button onclick="addTodo()">Add</button>
       </div>
     </div>
-  </div>
-  <div class="info-box" style="margin-top:14px">
-    <h3>📅 Google Calendar</h3>
-    <p>Click the calendar button on any task to open Google Calendar with it pre-filled — just hit Save. For full two-way sync (so both of you see the same tasks), we can connect to the Google Calendar API or Google Sheets. Ask me to set that up!</p>
   </div>
 </div>
 
