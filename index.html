@@ -344,13 +344,21 @@ tr.trow:hover td{background:#FDF7FD;cursor:pointer}
 
 <!-- RANKINGS -->
 <div id="page-rankings" class="page">
-  <div class="ph"><h1>Rankings</h1><p>Sorted by average dish rating</p></div>
+  <div class="ph"><h1>Rankings</h1><p>Your personal bests, patterns, and standouts.</p></div>
   <div class="g2">
-    <div class="sc"><div class="sc-head"><h3>Top Restaurants</h3></div><div class="sc-body" id="rk-rests"></div></div>
+    <div class="sc"><div class="sc-head"><h3>Top Restaurants</h3><span class="sc-meta">2+ dishes</span></div><div class="sc-body" id="rk-rests"></div></div>
     <div class="sc"><div class="sc-head"><h3>Top Dishes of All Time</h3></div><div class="sc-body" id="rk-dishes"></div></div>
   </div>
   <div class="g2">
-    <div class="sc"><div class="sc-head"><h3>Most Consistent Spots</h3><span class="sc-meta">lowest variance</span></div><div class="sc-body" id="rk-consist"></div></div>
+    <div class="sc"><div class="sc-head"><h3>Best Nights Out</h3><span class="sc-meta">best single visit</span></div><div class="sc-body" id="rk-visits"></div></div>
+    <div class="sc"><div class="sc-head"><h3>9+ Hit Rate</h3><span class="sc-meta">3+ dishes</span></div><div class="sc-body" id="rk-hitrate"></div></div>
+  </div>
+  <div class="g2">
+    <div class="sc"><div class="sc-head"><h3>Same Dish, Different Spots</h3></div><div class="sc-body" id="rk-repeat"></div></div>
+    <div class="sc"><div class="sc-head"><h3>Category Kings</h3><span class="sc-meta">best per type</span></div><div class="sc-body" id="rk-cats"></div></div>
+  </div>
+  <div class="g2">
+    <div class="sc"><div class="sc-head"><h3>Hidden Gems</h3><span class="sc-meta">one dish wonders</span></div><div class="sc-body" id="rk-gems"></div></div>
     <div class="sc"><div class="sc-head"><h3>Best Cities</h3></div><div class="sc-body" id="rk-cities"></div></div>
   </div>
 </div>
@@ -921,39 +929,92 @@ function renderDrinks(){
 }
 
 // ─── RANKINGS ────────────────────────────────────────────────────────────────
+function normDishName(d){return String(d||'').toLowerCase().trim();}
+
 function renderRankings(){
   const byR=groupBy(data,'restaurant');
   const rr=Object.entries(byR).map(([n,items])=>({n,a:avgR(items),city:items[0].city,cnt:items.length})).filter(r=>r.cnt>=2).sort((a,b)=>b.a-a.a);
-  document.getElementById('rk-rests').innerHTML=rr.slice(0,10).map((r,i)=>`
+  document.getElementById('rk-rests').innerHTML=rr.slice(0,8).map((r,i)=>`
     <div class="rnk" onclick="showRestaurant('${r.n.replace(/'/g,"\\'")}')">
       <div class="rnum ${NUMS[i]||''}">${i+1}</div>
       <div style="flex:1"><div class="rn">${r.n}</div><div class="rs">${r.city} · ${r.cnt} dishes</div></div>
       <div class="score" style="color:${rColor(r.a)}">${fmt(r.a)}</div>
-    </div>`).join('');
+    </div>`).join('')||'<div style="padding:16px;color:var(--faint);font-size:13px">Log 2+ dishes at a spot to rank it.</div>';
 
-  document.getElementById('rk-dishes').innerHTML=[...data].sort((a,b)=>b.rating-a.rating).slice(0,12).map((d,i)=>`
+  document.getElementById('rk-dishes').innerHTML=[...data].sort((a,b)=>b.rating-a.rating).slice(0,10).map((d,i)=>`
     <div class="rnk" onclick="showDish(${d.id})">
       <div class="rnum ${NUMS[i]||''}">${i+1}</div>
-      <div style="flex:1"><div class="rn">${d.emoji} ${d.dish}</div><div class="rs">${d.restaurant}</div></div>
+      <div style="flex:1"><div class="rn">${d.emoji} ${d.dish}</div><div class="rs">${d.restaurant} · ${d.city}</div></div>
       <div class="score" style="color:${rColor(d.rating)}">${fmt(d.rating)}</div>
     </div>`).join('');
 
-  const consistent=Object.entries(byR).map(([n,items])=>{
+  const visits=[];
+  data.filter(d=>d.date).forEach(d=>{
+    const key=`${d.restaurant}::${d.date}`;
+    if(!visits[key])visits[key]={n:d.restaurant,city:d.city,date:d.date,items:[]};
+    visits[key].items.push(d);
+  });
+  const bestNights=Object.values(visits).filter(v=>v.items.length>=2).map(v=>({...v,a:avgR(v.items),cnt:v.items.length})).sort((a,b)=>b.a-a.a).slice(0,8);
+  document.getElementById('rk-visits').innerHTML=bestNights.map((v,i)=>`
+    <div class="rnk" onclick="showRestaurant('${v.n.replace(/'/g,"\\'")}')">
+      <div class="rnum ${NUMS[i]||''}">${i+1}</div>
+      <div style="flex:1"><div class="rn">${v.n}</div><div class="rs">${fmtD(v.date)} · ${v.cnt} dishes · ${v.city}</div></div>
+      <div class="score" style="color:${rColor(v.a)}">${fmt(v.a)}</div>
+    </div>`).join('')||'<div style="padding:16px;color:var(--faint);font-size:13px">Add dates to your visits to rank nights out.</div>';
+
+  const hitRate=Object.entries(byR).map(([n,items])=>{
     if(items.length<3)return null;
-    const a=avgR(items);const sd=Math.sqrt(avg(items.map(i=>Math.pow(i.rating-a,2))));
-    return{n,a,sd,city:items[0].city,cnt:items.length};
-  }).filter(Boolean).sort((a,b)=>a.sd-b.sd).slice(0,6);
-  document.getElementById('rk-consist').innerHTML=consistent.map((r,i)=>`
+    const amazing=items.filter(d=>d.rating>=9).length;
+    return{n,a:avgR(items),city:items[0].city,cnt:items.length,pct:amazing/items.length*100,amazing};
+  }).filter(Boolean).sort((a,b)=>b.pct-a.pct||b.a-a.a).slice(0,8);
+  document.getElementById('rk-hitrate').innerHTML=hitRate.map((r,i)=>`
     <div class="rnk" onclick="showRestaurant('${r.n.replace(/'/g,"\\'")}')">
       <div class="rnum ${NUMS[i]||''}">${i+1}</div>
-      <div style="flex:1"><div class="rn">${r.n}</div><div class="rs">${r.city} · ±${fmt(r.sd)} std dev</div></div>
-      <div class="score" style="color:${rColor(r.a)}">${fmt(r.a)}</div>
-    </div>`).join('');
+      <div style="flex:1"><div class="rn">${r.n}</div><div class="rs">${r.amazing}/${r.cnt} amazing · ${r.city}</div></div>
+      <div class="score" style="color:${rColor(r.a)}">${r.pct.toFixed(0)}%</div>
+    </div>`).join('')||'<div style="padding:16px;color:var(--faint);font-size:13px">Need 3+ dishes at a spot for hit rate.</div>';
 
-  document.getElementById('rk-cities').innerHTML=Object.entries(groupBy(data,'city')).map(([city,items])=>({city,a:avgR(items),cnt:items.length})).sort((a,b)=>b.a-a.a).map((c,i)=>`
+  const byDishName={};
+  data.forEach(d=>{
+    const key=normDishName(d.dish);
+    if(!byDishName[key])byDishName[key]={name:d.dish,emoji:d.emoji,entries:[]};
+    byDishName[key].entries.push(d);
+  });
+  const repeatDishes=Object.values(byDishName).filter(g=>g.entries.length>=2&&new Set(g.entries.map(e=>e.restaurant)).size>=2)
+    .map(g=>{const best=[...g.entries].sort((a,b)=>b.rating-a.rating)[0];return{...g,best,a:avgR(g.entries)};})
+    .sort((a,b)=>b.entries.length-a.entries.length||b.a-a.a).slice(0,8);
+  document.getElementById('rk-repeat').innerHTML=repeatDishes.map((g,i)=>`
+    <div class="rnk" onclick="showDish(${g.best.id})">
+      <div class="rnum ${NUMS[i]||''}">${i+1}</div>
+      <div style="flex:1"><div class="rn">${g.emoji} ${g.name}</div><div class="rs">${g.entries.length} tries · best at ${g.best.restaurant} (${fmt(g.best.rating)})</div></div>
+      <div class="score" style="color:${rColor(g.a)}">${fmt(g.a)}</div>
+    </div>`).join('')||'<div style="padding:16px;color:var(--faint);font-size:13px">Order the same dish at 2+ spots to compare.</div>';
+
+  document.getElementById('rk-cats').innerHTML=CATS.map(c=>{
+    const items=data.filter(c.fn).sort((a,b)=>b.rating-a.rating);
+    if(!items.length)return'';
+    const d=items[0];
+    return`<div class="rnk" onclick="showDish(${d.id})">
+      <div style="flex:1"><div class="rn">${d.emoji} ${d.dish}</div><div class="rs">${c.label} · ${d.restaurant}</div></div>
+      <div class="score" style="color:${rColor(d.rating)}">${fmt(d.rating)}</div>
+    </div>`;
+  }).join('');
+
+  const gems=[...data].filter(d=>{
+    const cnt=byR[d.restaurant].length;
+    return cnt===1&&d.rating>=9.5;
+  }).sort((a,b)=>b.rating-a.rating).slice(0,8);
+  document.getElementById('rk-gems').innerHTML=gems.map((d,i)=>`
+    <div class="rnk" onclick="showDish(${d.id})">
+      <div class="rnum ${NUMS[i]||''}">${i+1}</div>
+      <div style="flex:1"><div class="rn">${d.emoji} ${d.dish}</div><div class="rs">${d.restaurant} · ${d.city}</div></div>
+      <div class="score" style="color:${rColor(d.rating)}">${fmt(d.rating)}</div>
+    </div>`).join('')||'<div style="padding:16px;color:var(--faint);font-size:13px">No 9.5+ one-dish wonders yet.</div>';
+
+  document.getElementById('rk-cities').innerHTML=Object.entries(groupBy(data,'city')).map(([city,items])=>({city,a:avgR(items),cnt:items.length,rests:new Set(items.map(i=>i.restaurant)).size})).sort((a,b)=>b.a-a.a).map((c,i)=>`
     <div class="rnk" onclick="showCity('${c.city}')">
       <div class="rnum ${NUMS[i]||''}">${i+1}</div>
-      <div style="flex:1"><div class="rn">${c.city}</div><div class="rs">${c.cnt} dishes</div></div>
+      <div style="flex:1"><div class="rn">${c.city}</div><div class="rs">${c.cnt} dishes · ${c.rests} spots</div></div>
       <div class="score" style="color:${rColor(c.a)}">${fmt(c.a)}</div>
     </div>`).join('');
 }
