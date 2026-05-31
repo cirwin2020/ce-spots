@@ -63,13 +63,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 /* TOP RATED */
 .leg{background:var(--card);border:1.5px solid var(--pink);border-radius:var(--r);padding:14px 18px;margin-bottom:14px}
-.leg-title{font-size:13px;font-weight:700;color:var(--pink);margin-bottom:10px;letter-spacing:.2px}
+.leg-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:10px;letter-spacing:.2px}
 .leg-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--pink-b);cursor:pointer;border-radius:6px;transition:background .12s}
 .leg-row:last-child{border-bottom:none}
 .leg-row:hover{background:var(--pink-l);margin:0 -6px;padding:8px 6px}
-.leg-dish{font-size:15px;font-weight:600;color:var(--pink);line-height:1.25}
-.leg-rest{font-size:12px;color:var(--pink-d);margin-top:3px;opacity:.85}
-.leg-sc{font-size:20px;font-weight:700;color:var(--pink)}
+.leg-dish{font-size:15px;font-weight:600;color:var(--text);line-height:1.25}
+.leg-rest{font-size:12px;color:var(--pink);margin-top:3px}
+.leg-sc{font-size:20px;font-weight:700;color:var(--text)}
 
 /* LIST ROWS */
 .lr{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid #F5EEF5;cursor:pointer;transition:background .12s;border-radius:7px;margin:0 -8px;padding-left:8px;padding-right:8px}
@@ -739,7 +739,7 @@ function renderOverview(){
     <div class="stat"><div class="sl">Amazing (9+)</div><div class="sv">${amazing.length}</div><div class="ss">${((amazing.length/data.length)*100).toFixed(0)}% of all dishes</div></div>`;
 
   const leg=data.filter(d=>d.rating>=9.8).sort((a,b)=>b.rating-a.rating);
-  document.getElementById('ov-leg').innerHTML=`<div class="leg-title">Top Rated — 9.8 or above</div>${leg.map(d=>`
+  document.getElementById('ov-leg').innerHTML=`<div class="leg-title">Top Rated</div>${leg.map(d=>`
     <div class="leg-row" onclick="showDish(${d.id})">
       <div><div class="leg-dish">${d.emoji} ${d.dish}</div><div class="leg-rest">${d.restaurant} · ${d.city}</div></div>
       <div class="leg-sc">${fmt(d.rating)}</div>
