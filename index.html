@@ -267,54 +267,33 @@ tr.trow:hover td{background:#FDF7FD;cursor:pointer}
 #loading-overlay .loading-txt{font-size:14px;color:var(--muted)}
 
 /* LOGIN */
-#login-screen{position:fixed;inset:0;z-index:10000;background:var(--bg);display:flex;overflow:hidden}
+#login-screen{position:fixed;inset:0;z-index:10000;overflow:hidden}
 #login-screen.hidden{display:none}
-.login-visual{flex:1.2;position:relative;overflow:hidden;background:linear-gradient(135deg,var(--pink-l),var(--blue-l))}
-.login-slides{position:absolute;inset:0}
-.login-slide{position:absolute;inset:0;opacity:0;transition:opacity 1.2s ease-in-out;transform:scale(1.04)}
-.login-slide.active{opacity:1;transform:scale(1);transition:opacity 1.2s ease-in-out,transform 8s ease-out}
+.login-slides{position:absolute;inset:0;z-index:0}
+.login-slide{position:absolute;inset:0;opacity:0;transition:opacity 1.4s ease-in-out;transform:scale(1.06)}
+.login-slide.active{opacity:1;transform:scale(1);transition:opacity 1.4s ease-in-out,transform 10s ease-out}
 .login-slide img{width:100%;height:100%;object-fit:cover;display:block}
-.login-slide-empty{display:flex;align-items:center;justify-content:center;background:linear-gradient(145deg,var(--pink-l) 0%,#fff 50%,var(--blue-l) 100%)}
-.login-slide-empty-txt{font-size:15px;color:var(--pink-d);text-align:center;padding:32px;line-height:1.6;max-width:280px}
-.login-shade{position:absolute;inset:0;background:linear-gradient(to right,rgba(40,10,40,.08),rgba(40,10,40,.02) 40%,transparent 70%)}
-.login-panel{flex:0 0 min(420px,100vw);display:flex;align-items:center;justify-content:center;padding:40px 36px;background:#fff;border-left:1px solid var(--border)}
-.login-card{width:100%;max-width:320px;text-align:center}
-.login-logo{font-size:42px;font-weight:700;line-height:1;margin-bottom:8px}
+.login-slide-empty{background:linear-gradient(145deg,var(--pink-l) 0%,#fff 50%,var(--blue-l) 100%)}
+.login-veil{position:absolute;inset:0;z-index:1;background:rgba(20,8,20,.18);pointer-events:none}
+.login-center{position:absolute;inset:0;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;gap:22px}
+.login-glass{background:rgba(255,255,255,.28);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.45);border-radius:22px;padding:26px 44px;box-shadow:0 8px 32px rgba(40,10,40,.12)}
+.login-logo{font-size:52px;font-weight:700;line-height:1;text-shadow:0 1px 12px rgba(255,255,255,.5)}
 .login-logo .c,.login-logo .e{color:var(--pink)}
-.login-logo .plus{color:var(--blue);margin:0 2px}
-.login-tagline{font-size:14px;color:var(--muted);margin-bottom:28px;line-height:1.5}
-.login-pin{width:100%;padding:11px 14px;border:1px solid var(--border);border-radius:10px;font-family:inherit;font-size:15px;text-align:center;letter-spacing:.25em;margin-bottom:12px;outline:none}
-.login-pin:focus{border-color:var(--pink)}
-.login-btn{width:100%;padding:12px 20px;border-radius:10px;border:none;background:var(--pink);color:#fff;font-family:inherit;font-size:15px;font-weight:600;cursor:pointer;transition:background .15s}
-.login-btn:hover{background:var(--pink-d)}
-.login-err{font-size:12px;color:#9A2525;min-height:18px;margin-top:8px}
-.login-dots{position:absolute;bottom:22px;left:50%;transform:translateX(-50%);display:flex;gap:7px;z-index:2}
-.login-dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.45);border:1px solid rgba(255,255,255,.6);cursor:pointer;transition:all .2s}
-.login-dot.active{background:#fff;transform:scale(1.15)}
-@media(max-width:768px){
-  #login-screen{flex-direction:column}
-  .login-visual{flex:1;min-height:45vh}
-  .login-panel{flex:1;border-left:none;border-top:1px solid var(--border);padding:28px 24px 36px}
-  .login-shade{background:linear-gradient(to top,rgba(40,10,40,.15),transparent 60%)}
-}
+.login-logo .plus{color:var(--blue);margin:0 3px}
+.login-btn{padding:14px 32px;border-radius:999px;border:none;background:var(--pink);color:#fff;font-family:inherit;font-size:15px;font-weight:600;cursor:pointer;transition:all .15s;box-shadow:0 4px 20px rgba(212,120,154,.45)}
+.login-btn:hover{background:var(--pink-d);transform:translateY(-1px);box-shadow:0 6px 24px rgba(212,120,154,.5)}
 </style>
 </head>
 <body>
 
 <div id="login-screen">
-  <div class="login-visual">
-    <div class="login-slides" id="login-slides"></div>
-    <div class="login-shade"></div>
-    <div class="login-dots" id="login-dots"></div>
-  </div>
-  <div class="login-panel">
-    <div class="login-card">
+  <div class="login-slides" id="login-slides"></div>
+  <div class="login-veil"></div>
+  <div class="login-center">
+    <div class="login-glass">
       <div class="login-logo"><span class="c">C</span><span class="plus">+</span><span class="e">E</span></div>
-      <div class="login-tagline">Our food diary — every spot, every dish, together.</div>
-      <input type="password" class="login-pin" id="login-pin" placeholder="••••" maxlength="12" autocomplete="off" onkeydown="if(event.key==='Enter')submitLogin()" />
-      <button type="button" class="login-btn" onclick="submitLogin()">Open our diary</button>
-      <div class="login-err" id="login-err"></div>
     </div>
+    <button type="button" class="login-btn" onclick="submitLogin()">Open the notes ❤️</button>
   </div>
 </div>
 
@@ -510,13 +489,11 @@ tr.trow:hover td{background:#FDF7FD;cursor:pointer}
 // ─── LOGIN ────────────────────────────────────────────────────────────────────
 // Add your photos to the photos/ folder, then list them here (or use any image URL).
 const LOGIN_PHOTOS=[
-  'photos/1.jpg',
-  'photos/2.jpg',
-  'photos/3.jpg',
-  'photos/4.jpg',
-  'photos/5.jpg',
+  'photos/IMG_5318.JPG',
+  'photos/IMG_5325.JPG',
+  'photos/IMG_5326.JPG',
+  'photos/IMG_3304.jpg',
 ];
-// Set a shared PIN, or leave empty to open with just the button (no password).
 const LOGIN_PASS='';
 
 let loginSlideIdx=0,loginSlideTimer=null;
@@ -526,19 +503,11 @@ function isLoggedIn(){return sessionStorage.getItem('ce_auth')==='1';}
 function initLogin(){
   const photos=LOGIN_PHOTOS.filter(Boolean);
   const track=document.getElementById('login-slides');
-  const dots=document.getElementById('login-dots');
-  const pinEl=document.getElementById('login-pin');
-  if(!LOGIN_PASS){
-    pinEl.style.display='none';
-    pinEl.value='';
-  }
   if(!photos.length){
-    track.innerHTML='<div class="login-slide active login-slide-empty"><div class="login-slide-empty-txt">Add photos to the <strong>photos/</strong> folder and list them in <strong>LOGIN_PHOTOS</strong> at the top of the script.</div></div>';
-    dots.innerHTML='';
+    track.innerHTML='<div class="login-slide active login-slide-empty"></div>';
     return;
   }
   track.innerHTML=photos.map((src,i)=>`<div class="login-slide${i===0?' active':''}"><img src="${src}" alt=""></div>`).join('');
-  dots.innerHTML=photos.map((_,i)=>`<button type="button" class="login-dot${i===0?' active':''}" aria-label="Slide ${i+1}" onclick="goLoginSlide(${i})"></button>`).join('');
   loginSlideIdx=0;
   if(loginSlideTimer)clearInterval(loginSlideTimer);
   loginSlideTimer=setInterval(()=>goLoginSlide((loginSlideIdx+1)%photos.length),5000);
@@ -546,20 +515,12 @@ function initLogin(){
 
 function goLoginSlide(i){
   const slides=document.querySelectorAll('.login-slide');
-  const dots=document.querySelectorAll('.login-dot');
   if(!slides.length)return;
   loginSlideIdx=((i%slides.length)+slides.length)%slides.length;
   slides.forEach((s,j)=>s.classList.toggle('active',j===loginSlideIdx));
-  dots.forEach((d,j)=>d.classList.toggle('active',j===loginSlideIdx));
 }
 
 function submitLogin(){
-  const err=document.getElementById('login-err');
-  if(LOGIN_PASS&&document.getElementById('login-pin').value!==LOGIN_PASS){
-    err.textContent='Wrong code — try again';
-    return;
-  }
-  err.textContent='';
   sessionStorage.setItem('ce_auth','1');
   if(loginSlideTimer)clearInterval(loginSlideTimer);
   document.getElementById('login-screen').classList.add('hidden');
