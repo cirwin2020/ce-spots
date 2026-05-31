@@ -17,7 +17,8 @@
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:14px;min-height:100vh}
 
 /* NAV */
-.topbar{background:#fff;border-bottom:1px solid var(--border);padding:0 28px;display:flex;align-items:center;justify-content:space-between;height:62px;position:sticky;top:0;z-index:100}
+.topbar{background:#fff;border-bottom:1px solid var(--border);padding:0 40px;height:62px;position:sticky;top:0;z-index:100}
+.topbar-inner{display:flex;align-items:center;justify-content:space-between;width:100%;max-width:1080px;margin:0 auto;height:100%}
 .logo{font-size:20px;font-weight:700;display:flex;align-items:center}
 .logo .c,.logo .e{color:var(--pink)}
 .logo .plus{color:var(--blue);margin:0 1px}
@@ -28,10 +29,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .add-btn{font-size:13px;padding:7px 16px;border-radius:8px;border:1.5px solid var(--pink);background:var(--pink);color:#fff;cursor:pointer;font-family:inherit;font-weight:600;transition:all .15s;white-space:nowrap}
 .add-btn:hover{background:var(--pink-d)}
 
+/* PAGES */
+.page{display:none;padding:20px 40px 48px;max-width:1080px;margin:0 auto;width:100%}
+.page.active{display:block}
+
 .ov-subsec{margin-bottom:16px}
 .ov-subsec:last-child{margin-bottom:0}
 .ov-subsec-l{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px}
-.page.active{display:block}
 .ph{margin-bottom:18px}
 .ph h1{font-size:21px;font-weight:700}
 .ph p{font-size:13px;color:var(--muted);margin-top:3px}
@@ -262,6 +266,7 @@ tr.trow:hover td{background:#FDF7FD;cursor:pointer}
 </div>
 
 <div class="topbar">
+  <div class="topbar-inner">
   <div class="logo"><span class="c">C</span><span class="plus">+</span><span class="e">E</span></div>
   <div class="nav">
     <button class="nb active" onclick="nav('overview',this)">Overview</button>
@@ -273,6 +278,7 @@ tr.trow:hover td{background:#FDF7FD;cursor:pointer}
     <button class="nb" onclick="nav('todo',this)">To Do</button>
   </div>
   <button class="add-btn" onclick="openModal()">+ Log a visit</button>
+  </div>
 </div>
 
 <!-- OVERVIEW -->
