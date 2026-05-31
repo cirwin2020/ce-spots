@@ -530,7 +530,7 @@ const SEED=[
   {id:81,restaurant:"LoLa",city:"Palm Beach",date:"",dish:"Asaho Roll",emoji:"🍣",rating:8.8,notes:""},
   {id:82,restaurant:"Domino's",city:"Bangor",date:"2026-05-25",dish:"GF Pepperoni Pizza",emoji:"🍕",rating:7.8,notes:""},
   {id:83,restaurant:"Timber",city:"Bangor",date:"2026-05-26",dish:"Spinach & Artichoke Dip",emoji:"🥬",rating:8.7,notes:""},
-  {id:84,restaurant:"Timber",city:"Bangor",date:"2026-05-26",dish:"Margarita Pizza",emoji:"🍕",rating:6.5,notes:""},
+  {id:84,restaurant:"Timber",city:"Bangor",date:"2026-05-26",dish:"Margherita Pizza",emoji:"🍕",rating:6.5,notes:""},
   {id:85,restaurant:"Timber",city:"Bangor",date:"2026-05-26",dish:"Burger",emoji:"🍔",rating:9.1,notes:""},
   {id:86,restaurant:"Timber",city:"Bangor",date:"2026-05-26",dish:"Fries",emoji:"🍟",rating:7.3,notes:""},
   {id:87,restaurant:"Timber",city:"Bangor",date:"2026-05-26",dish:"Fish Tacos",emoji:"🌮",rating:5.2,notes:""},
@@ -558,7 +558,7 @@ const SEED=[
   {id:109,restaurant:"Fabrique",city:"Stockholm",date:"2026-05-29",dish:"Cranberry Bar",emoji:"🍫",rating:8.1,notes:""},
   {id:110,restaurant:"Fabrique",city:"Stockholm",date:"2026-05-29",dish:"Almond Cardamom Cake",emoji:"🧁",rating:6.2,notes:""},
   {id:111,restaurant:"Fabrique",city:"Stockholm",date:"2026-05-29",dish:"Cinnamon Bun",emoji:"🧱",rating:9.4,notes:""},
-  {id:112,restaurant:"Villa Dagmar",city:"Stockholm",date:"2026-05-29",dish:"Margarita Pizza",emoji:"🍕",rating:9.9,notes:""},
+  {id:112,restaurant:"Villa Dagmar",city:"Stockholm",date:"2026-05-29",dish:"Margherita Pizza",emoji:"🍕",rating:9.9,notes:""},
   {id:113,restaurant:"Villa Dagmar",city:"Stockholm",date:"2026-05-29",dish:"Fries w/ Béarnaise",emoji:"🍟",rating:9.9,notes:""},
   {id:114,restaurant:"Chez Jolie",city:"Stockholm",date:"2026-05-29",dish:"Artichoke",emoji:"🌱",rating:5.4,notes:""},
   {id:115,restaurant:"Chez Jolie",city:"Stockholm",date:"2026-05-29",dish:"Beef Filet w/ Potato Wedges",emoji:"🥩",rating:8.1,notes:""},
@@ -616,11 +616,23 @@ const CUISINE_RULES=[
 function guessCuisine(name){for(const r of CUISINE_RULES){if(r.kw.test(name))return r;}return{cat:"Other",emoji:"🍽️"};}
 
 const DRINK_KW=/\bmatcha\b|\bcoffee\b|\blatte\b|\bespresso\b|\btea\b|\bcocktail\b|\bmartini\b|\bwine\b|\bbeer\b|\bsake\b|\bjuice\b|\bsmoothie\b|\bsoda\b|\bcappuccino\b|\bamericano\b|\bflat white\b|\bcold brew\b|\biced coffee\b|\bspritz\b|\bnegroni\b|\bmojito\b|\bmargarita\b|\bdaiquiri\b|\bgin\b|\bvodka\b|\bwhiskey\b|\bchampagne\b|\bprosecco\b|\bhot chocolate\b|\bchai\b|\boolong\b|\bgreen tea\b|\boat milk\b|\bdrink\b|\bbeverage\b|\bboba\b/i;
+const FOOD_KW=/\bpizza\b|\bburger\b|\btaco\b|\bsandwich\b|\bnachos\b|\bsalad\b|\bsteak\b|\bpasta\b|\brisotto\b|\bsushi\b|\bburrito\b|\bwrap\b|\bbowl\b|\bsoup\b|\bcroissant\b|\bmuffin\b|\bcake\b|\bfries\b|\bfrites\b|\bomelette\b|\bmeatball\b|\bburrata\b|\bfilet\b|\bwagyu\b|\bhot dog\b/i;
+function isDrink(d){
+  if(d.type==='drink')return true;
+  if(d.type==='dish')return false;
+  if(FOOD_KW.test(d.dish))return false;
+  return DRINK_KW.test(d.dish);
+}
+function normalizeDish(d){
+  d.dish=String(d.dish||'').replace(/\bMargarita Pizza\b/gi,'Margherita Pizza');
+  if(/pizza/i.test(d.dish))d.type='dish';
+  return d;
+}
 const DRINK_CATS={
-  matcha:d=>/\bmatcha\b|\bgreen tea\b|\boat milk\b/i.test(d.dish),
-  coffee:d=>/\bcoffee\b|\blatte\b|\bespresso\b|\bcappuccino\b|\bamericano\b|\bflat white\b|\bcold brew\b/i.test(d.dish),
-  cocktail:d=>/\bcocktail\b|\bmartini\b|\bwine\b|\bbeer\b|\bsake\b|\bspritz\b|\bnegroni\b|\bmojito\b|\bmargarita\b|\bdaiquiri\b|\bgin\b|\bvodka\b|\bwhiskey\b|\bchampagne\b|\bprosecco\b/i.test(d.dish),
-  other:d=>DRINK_KW.test(d.dish)&&!d.dish.match(/\bmatcha\b|\bcoffee\b|\blatte\b|\bespresso\b|\bcappuccino\b|\bamericano\b|\bflat white\b|\bcold brew\b|\bcocktail\b|\bmartini\b|\bwine\b|\bbeer\b|\bsake\b|\bspritz\b|\bnegroni\b|\bmojito\b|\bmargarita\b|\bdaiquiri\b|\bgin\b|\bvodka\b|\bwhiskey\b|\bchampagne\b|\bprosecco\b/i),
+  matcha:d=>isDrink(d)&&/\bmatcha\b|\bgreen tea\b|\boat milk\b/i.test(d.dish),
+  coffee:d=>isDrink(d)&&/\bcoffee\b|\blatte\b|\bespresso\b|\bcappuccino\b|\bamericano\b|\bflat white\b|\bcold brew\b/i.test(d.dish),
+  cocktail:d=>isDrink(d)&&/\bcocktail\b|\bmartini\b|\bwine\b|\bbeer\b|\bsake\b|\bspritz\b|\bnegroni\b|\bmojito\b|\bmargarita\b|\bdaiquiri\b|\bgin\b|\bvodka\b|\bwhiskey\b|\bchampagne\b|\bprosecco\b/i.test(d.dish),
+  other:d=>isDrink(d)&&!d.dish.match(/\bmatcha\b|\bcoffee\b|\blatte\b|\bespresso\b|\bcappuccino\b|\bamericano\b|\bflat white\b|\bcold brew\b|\bcocktail\b|\bmartini\b|\bwine\b|\bbeer\b|\bsake\b|\bspritz\b|\bnegroni\b|\bmojito\b|\bmargarita\b|\bdaiquiri\b|\bgin\b|\bvodka\b|\bwhiskey\b|\bchampagne\b|\bprosecco\b/i),
 };
 
 // ─── STATE ────────────────────────────────────────────────────────────────────
@@ -636,15 +648,15 @@ async function load(){
     const res=await fetch(API);
     const json=await res.json();
     if(json.ok&&json.data&&json.data.length>0){
-      data=json.data.map(r=>({id:r.id,dish:String(r.dish||''),restaurant:String(r.restaurant||''),city:String(r.city||''),rating:parseFloat(r.rating)||0,notes:String(r.notes||''),date:String(r.date||''),emoji:String(r.emoji||'🍽️'),type:r.type||'dish'}));
+      data=json.data.map(r=>normalizeDish({id:r.id,dish:String(r.dish||''),restaurant:String(r.restaurant||''),city:String(r.city||''),rating:parseFloat(r.rating)||0,notes:String(r.notes||''),date:String(r.date||''),emoji:String(r.emoji||'🍽️'),type:r.type||'dish'}));
     } else {
       // Sheet is empty — seed it with default data
-      data=JSON.parse(JSON.stringify(SEED));
+      data=JSON.parse(JSON.stringify(SEED)).map(normalizeDish);
       syncToSheets();
     }
   }catch(e){
     // Offline fallback
-    try{data=JSON.parse(localStorage.getItem('ce_v4')||'null')||JSON.parse(JSON.stringify(SEED));}catch(e2){data=JSON.parse(JSON.stringify(SEED));}
+    try{data=(JSON.parse(localStorage.getItem('ce_v4')||'null')||JSON.parse(JSON.stringify(SEED))).map(normalizeDish);}catch(e2){data=JSON.parse(JSON.stringify(SEED)).map(normalizeDish);}
     console.warn('Sheets unavailable, using local data',e);
   }
 }
@@ -798,7 +810,7 @@ function renderDishes(){filterDishes();}
 let drinkFilter='all';
 function setDrinkF(f,el){drinkFilter=f;document.querySelectorAll('#dk-filters .chip').forEach(c=>c.classList.remove('active'));el.classList.add('active');renderDrinks();}
 function renderDrinks(){
-  const allDrinks=data.filter(d=>DRINK_KW.test(d.dish));
+  const allDrinks=data.filter(isDrink);
   let drinks=allDrinks;
   if(drinkFilter!=='all'&&DRINK_CATS[drinkFilter])drinks=allDrinks.filter(DRINK_CATS[drinkFilter]);
   drinks=[...drinks].sort((a,b)=>b.rating-a.rating);
