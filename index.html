@@ -28,8 +28,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .add-btn{font-size:13px;padding:7px 16px;border-radius:8px;border:1.5px solid var(--pink);background:var(--pink);color:#fff;cursor:pointer;font-family:inherit;font-weight:600;transition:all .15s;white-space:nowrap}
 .add-btn:hover{background:var(--pink-d)}
 
-/* PAGES */
-.page{display:none;padding:20px 24px 48px;max-width:1080px;margin:0 auto}
+.ov-subsec{margin-bottom:16px}
+.ov-subsec:last-child{margin-bottom:0}
+.ov-subsec-l{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px}
 .page.active{display:block}
 .ph{margin-bottom:18px}
 .ph h1{font-size:21px;font-weight:700}
@@ -284,13 +285,12 @@ tr.trow:hover td{background:#FDF7FD;cursor:pointer}
     <div class="sc"><div class="sc-head"><h3>Favorites by Category</h3></div><div class="sc-body" id="ov-cats"></div></div>
   </div>
   <div class="g3">
-    <div class="sc"><div class="sc-head"><h3>Rating Distribution</h3></div><div class="sc-body" id="ov-dist"></div></div>
-    <div class="sc"><div class="sc-head"><h3>Cities Visited</h3></div><div class="sc-body" id="ov-cities"></div></div>
-    <div class="sc"><div class="sc-head"><h3>Recent Dishes</h3></div><div class="sc-body" id="ov-recent"></div></div>
-  </div>
-  <div class="g2">
-    <div class="sc"><div class="sc-head"><h3>Dish Tiers</h3></div><div class="sc-body" id="ov-tiers"></div></div>
+    <div class="sc"><div class="sc-head"><h3>Ratings</h3></div><div class="sc-body">
+      <div class="ov-subsec"><div class="ov-subsec-l">Distribution</div><div id="ov-dist"></div></div>
+      <div class="ov-subsec"><div class="ov-subsec-l">Dish tiers</div><div id="ov-tiers"></div></div>
+    </div></div>
     <div class="sc"><div class="sc-head"><h3>Best Dish per Category</h3></div><div class="sc-body" id="ov-best-cat"></div></div>
+    <div class="sc"><div class="sc-head"><h3>Recent Dishes</h3></div><div class="sc-body" id="ov-recent"></div></div>
   </div>
 </div>
 
@@ -758,13 +758,6 @@ function renderOverview(){
   const buckets=[{l:'9–10',min:9,max:11},{l:'8–9',min:8,max:9},{l:'7–8',min:7,max:8},{l:'6–7',min:6,max:7},{l:'1–6',min:0,max:6}];
   const mxB=Math.max(...buckets.map(b=>data.filter(d=>d.rating>=b.min&&d.rating<b.max).length));
   document.getElementById('ov-dist').innerHTML=buckets.map(b=>{const cnt=data.filter(d=>d.rating>=b.min&&d.rating<b.max).length;return`<div class="dr2"><div class="dl">${b.l}</div><div class="dt"><div class="df" style="width:${mxB?((cnt/mxB)*100).toFixed(0):0}%"></div></div><div class="dc">${cnt}</div></div>`;}).join('');
-
-  const byC=groupBy(data,'city');
-  document.getElementById('ov-cities').innerHTML=Object.entries(byC).map(([city,items])=>({city,a:avgR(items),cnt:items.length})).sort((a,b)=>b.a-a.a).map(c=>`
-    <div class="lr" onclick="showCity('${c.city}')">
-      <div><div class="rn">${c.city}</div><div class="rs">${c.cnt} dishes</div></div>
-      <div class="score" style="color:${rColor(c.a)}">${fmt(c.a)}</div>
-    </div>`).join('');
 
   const recent=[...data].filter(d=>d.date).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,7);
   document.getElementById('ov-recent').innerHTML=recent.map(d=>`
