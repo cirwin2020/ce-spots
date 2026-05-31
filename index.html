@@ -128,7 +128,19 @@ tr.trow:hover td{background:#FDF7FD;cursor:pointer}
 .rnum{font-size:15px;font-weight:700;color:var(--border);width:22px;text-align:center;flex-shrink:0}
 .rnum.gold{color:var(--gold)} .rnum.silver{color:var(--silver)} .rnum.bronze{color:var(--bronze)}
 
-/* DRINKS */
+/* RESTAURANT BLOCKS */
+.rest-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+.rest-block{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:20px 18px;cursor:pointer;transition:all .15s;display:flex;flex-direction:column;gap:10px;min-height:140px}
+.rest-block:hover{border-color:var(--pink-b);background:var(--pink-l);transform:translateY(-1px);box-shadow:0 4px 16px rgba(212,120,154,.12)}
+.rest-block-emoji{font-size:32px;line-height:1}
+.rest-block-name{font-size:16px;font-weight:600;color:var(--text);line-height:1.25}
+.rest-block-meta{font-size:12px;color:var(--pink);font-weight:500}
+.rest-block-foot{display:flex;align-items:center;justify-content:space-between;margin-top:auto;padding-top:4px}
+.rest-block-score{font-size:26px;font-weight:700;line-height:1}
+.rest-block-cnt{font-size:11px;color:var(--muted)}
+.rest-block-dishes{display:flex;flex-wrap:wrap;gap:4px;margin-top:2px}
+.rest-block-dishes span{font-size:16px;line-height:1}
+
 .drink-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin-bottom:14px}
 .drink-card{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;cursor:pointer;transition:all .15s}
 .drink-card:hover{border-color:var(--pink-b);background:var(--pink-l)}
@@ -267,10 +279,12 @@ tr.trow:hover td{background:#FDF7FD;cursor:pointer}
 #loading-overlay .loading-txt{font-size:14px;color:var(--muted)}
 
 /* LOGIN */
-#login-screen{position:fixed;inset:0;z-index:10000;overflow:hidden}
+#app-shell{display:none}
+#app-shell.visible{display:block}
+#login-screen{position:fixed;inset:0;z-index:10000;overflow:hidden;background:#000}
 #login-screen.hidden{display:none}
-.login-slides{position:absolute;inset:0;z-index:0}
-.login-slide{position:absolute;inset:0;opacity:0;transition:opacity 1.4s ease-in-out;transform:scale(1.06)}
+.login-slides{position:absolute;inset:0;z-index:0;background:#000}
+.login-slide{position:absolute;inset:0;opacity:0;z-index:0;transition:opacity 1.4s ease-in-out;transform:scale(1.06)}
 .login-slide.active{opacity:1;transform:scale(1);transition:opacity 1.4s ease-in-out,transform 10s ease-out}
 .login-slide img{width:100%;height:100%;object-fit:cover;display:block}
 .login-slide-empty{background:linear-gradient(145deg,var(--pink-l) 0%,#fff 50%,var(--blue-l) 100%)}
@@ -375,23 +389,8 @@ tr.trow:hover td{background:#FDF7FD;cursor:pointer}
 
 <!-- RANKINGS -->
 <div id="page-rankings" class="page">
-  <div class="ph"><h1>Rankings</h1><p>Your personal bests, patterns, and standouts.</p></div>
-  <div class="g2">
-    <div class="sc"><div class="sc-head"><h3>Top Restaurants</h3><span class="sc-meta">2+ dishes</span></div><div class="sc-body" id="rk-rests"></div></div>
-    <div class="sc"><div class="sc-head"><h3>Top Dishes of All Time</h3></div><div class="sc-body" id="rk-dishes"></div></div>
-  </div>
-  <div class="g2">
-    <div class="sc"><div class="sc-head"><h3>Best Nights Out</h3><span class="sc-meta">best single visit</span></div><div class="sc-body" id="rk-visits"></div></div>
-    <div class="sc"><div class="sc-head"><h3>9+ Hit Rate</h3><span class="sc-meta">3+ dishes</span></div><div class="sc-body" id="rk-hitrate"></div></div>
-  </div>
-  <div class="g2">
-    <div class="sc"><div class="sc-head"><h3>Same Dish, Different Spots</h3></div><div class="sc-body" id="rk-repeat"></div></div>
-    <div class="sc"><div class="sc-head"><h3>Category Kings</h3><span class="sc-meta">best per type</span></div><div class="sc-body" id="rk-cats"></div></div>
-  </div>
-  <div class="g2">
-    <div class="sc"><div class="sc-head"><h3>Hidden Gems</h3><span class="sc-meta">one dish wonders</span></div><div class="sc-body" id="rk-gems"></div></div>
-    <div class="sc"><div class="sc-head"><h3>Best Cities</h3></div><div class="sc-body" id="rk-cities"></div></div>
-  </div>
+  <div class="ph"><h1>Rankings</h1><p>Every spot you've been to — tap to see dishes.</p></div>
+  <div class="rest-grid" id="rk-rest-blocks"></div>
 </div>
 
 <!-- FOR YOU -->
@@ -519,14 +518,28 @@ function initLogin(){
 function goLoginSlide(i){
   const slides=document.querySelectorAll('.login-slide');
   if(!slides.length)return;
-  loginSlideIdx=((i%slides.length)+slides.length)%slides.length;
-  slides.forEach((s,j)=>s.classList.toggle('active',j===loginSlideIdx));
+  const next=((i%slides.length)+slides.length)%slides.length;
+  if(next===loginSlideIdx)return;
+  const cur=slides[loginSlideIdx],nxt=slides[next];
+  nxt.style.zIndex='2';
+  nxt.classList.add('active');
+  setTimeout(()=>{
+    cur.classList.remove('active');
+    nxt.style.zIndex='1';
+    slides.forEach(s=>{if(s!==nxt)s.style.zIndex='0';});
+  },1400);
+  loginSlideIdx=next;
+}
+
+function showAppShell(){
+  document.getElementById('app-shell').classList.add('visible');
 }
 
 function submitLogin(){
   sessionStorage.setItem('ce_auth','1');
   if(loginSlideTimer)clearInterval(loginSlideTimer);
   document.getElementById('login-screen').classList.add('hidden');
+  showAppShell();
   bootApp();
 }
 
@@ -1054,94 +1067,24 @@ function renderDrinks(){
 }
 
 // ─── RANKINGS ────────────────────────────────────────────────────────────────
-function normDishName(d){return String(d||'').toLowerCase().trim();}
-
 function renderRankings(){
   const byR=groupBy(data,'restaurant');
-  const rr=Object.entries(byR).map(([n,items])=>({n,a:avgR(items),city:items[0].city,cnt:items.length})).filter(r=>r.cnt>=2).sort((a,b)=>b.a-a.a);
-  document.getElementById('rk-rests').innerHTML=rr.slice(0,8).map((r,i)=>`
-    <div class="rnk" onclick="showRestaurant('${r.n.replace(/'/g,"\\'")}')">
-      <div class="rnum ${NUMS[i]||''}">${i+1}</div>
-      <div style="flex:1"><div class="rn">${r.n}</div><div class="rs">${r.city} · ${r.cnt} dishes</div></div>
-      <div class="score" style="color:${rColor(r.a)}">${fmt(r.a)}</div>
-    </div>`).join('')||'<div style="padding:16px;color:var(--faint);font-size:13px">Log 2+ dishes at a spot to rank it.</div>';
-
-  document.getElementById('rk-dishes').innerHTML=[...data].sort((a,b)=>b.rating-a.rating).slice(0,10).map((d,i)=>`
-    <div class="rnk" onclick="showDish(${d.id})">
-      <div class="rnum ${NUMS[i]||''}">${i+1}</div>
-      <div style="flex:1"><div class="rn">${d.emoji} ${d.dish}</div><div class="rs">${d.restaurant} · ${d.city}</div></div>
-      <div class="score" style="color:${rColor(d.rating)}">${fmt(d.rating)}</div>
-    </div>`).join('');
-
-  const visits=[];
-  data.filter(d=>d.date).forEach(d=>{
-    const key=`${d.restaurant}::${d.date}`;
-    if(!visits[key])visits[key]={n:d.restaurant,city:d.city,date:d.date,items:[]};
-    visits[key].items.push(d);
-  });
-  const bestNights=Object.values(visits).filter(v=>v.items.length>=2).map(v=>({...v,a:avgR(v.items),cnt:v.items.length})).sort((a,b)=>b.a-a.a).slice(0,8);
-  document.getElementById('rk-visits').innerHTML=bestNights.map((v,i)=>`
-    <div class="rnk" onclick="showRestaurant('${v.n.replace(/'/g,"\\'")}')">
-      <div class="rnum ${NUMS[i]||''}">${i+1}</div>
-      <div style="flex:1"><div class="rn">${v.n}</div><div class="rs">${fmtD(v.date)} · ${v.cnt} dishes · ${v.city}</div></div>
-      <div class="score" style="color:${rColor(v.a)}">${fmt(v.a)}</div>
-    </div>`).join('')||'<div style="padding:16px;color:var(--faint);font-size:13px">Add dates to your visits to rank nights out.</div>';
-
-  const hitRate=Object.entries(byR).map(([n,items])=>{
-    if(items.length<3)return null;
-    const amazing=items.filter(d=>d.rating>=9).length;
-    return{n,a:avgR(items),city:items[0].city,cnt:items.length,pct:amazing/items.length*100,amazing};
-  }).filter(Boolean).sort((a,b)=>b.pct-a.pct||b.a-a.a).slice(0,8);
-  document.getElementById('rk-hitrate').innerHTML=hitRate.map((r,i)=>`
-    <div class="rnk" onclick="showRestaurant('${r.n.replace(/'/g,"\\'")}')">
-      <div class="rnum ${NUMS[i]||''}">${i+1}</div>
-      <div style="flex:1"><div class="rn">${r.n}</div><div class="rs">${r.amazing}/${r.cnt} amazing · ${r.city}</div></div>
-      <div class="score" style="color:${rColor(r.a)}">${r.pct.toFixed(0)}%</div>
-    </div>`).join('')||'<div style="padding:16px;color:var(--faint);font-size:13px">Need 3+ dishes at a spot for hit rate.</div>';
-
-  const byDishName={};
-  data.forEach(d=>{
-    const key=normDishName(d.dish);
-    if(!byDishName[key])byDishName[key]={name:d.dish,emoji:d.emoji,entries:[]};
-    byDishName[key].entries.push(d);
-  });
-  const repeatDishes=Object.values(byDishName).filter(g=>g.entries.length>=2&&new Set(g.entries.map(e=>e.restaurant)).size>=2)
-    .map(g=>{const best=[...g.entries].sort((a,b)=>b.rating-a.rating)[0];return{...g,best,a:avgR(g.entries)};})
-    .sort((a,b)=>b.entries.length-a.entries.length||b.a-a.a).slice(0,8);
-  document.getElementById('rk-repeat').innerHTML=repeatDishes.map((g,i)=>`
-    <div class="rnk" onclick="showDish(${g.best.id})">
-      <div class="rnum ${NUMS[i]||''}">${i+1}</div>
-      <div style="flex:1"><div class="rn">${g.emoji} ${g.name}</div><div class="rs">${g.entries.length} tries · best at ${g.best.restaurant} (${fmt(g.best.rating)})</div></div>
-      <div class="score" style="color:${rColor(g.a)}">${fmt(g.a)}</div>
-    </div>`).join('')||'<div style="padding:16px;color:var(--faint);font-size:13px">Order the same dish at 2+ spots to compare.</div>';
-
-  document.getElementById('rk-cats').innerHTML=CATS.map(c=>{
-    const items=data.filter(c.fn).sort((a,b)=>b.rating-a.rating);
-    if(!items.length)return'';
-    const d=items[0];
-    return`<div class="rnk" onclick="showDish(${d.id})">
-      <div style="flex:1"><div class="rn">${d.emoji} ${d.dish}</div><div class="rs">${c.label} · ${d.restaurant}</div></div>
-      <div class="score" style="color:${rColor(d.rating)}">${fmt(d.rating)}</div>
-    </div>`;
-  }).join('');
-
-  const gems=[...data].filter(d=>{
-    const cnt=byR[d.restaurant].length;
-    return cnt===1&&d.rating>=9.5;
-  }).sort((a,b)=>b.rating-a.rating).slice(0,8);
-  document.getElementById('rk-gems').innerHTML=gems.map((d,i)=>`
-    <div class="rnk" onclick="showDish(${d.id})">
-      <div class="rnum ${NUMS[i]||''}">${i+1}</div>
-      <div style="flex:1"><div class="rn">${d.emoji} ${d.dish}</div><div class="rs">${d.restaurant} · ${d.city}</div></div>
-      <div class="score" style="color:${rColor(d.rating)}">${fmt(d.rating)}</div>
-    </div>`).join('')||'<div style="padding:16px;color:var(--faint);font-size:13px">No 9.5+ one-dish wonders yet.</div>';
-
-  document.getElementById('rk-cities').innerHTML=Object.entries(groupBy(data,'city')).map(([city,items])=>({city,a:avgR(items),cnt:items.length,rests:new Set(items.map(i=>i.restaurant)).size})).sort((a,b)=>b.a-a.a).map((c,i)=>`
-    <div class="rnk" onclick="showCity('${c.city}')">
-      <div class="rnum ${NUMS[i]||''}">${i+1}</div>
-      <div style="flex:1"><div class="rn">${c.city}</div><div class="rs">${c.cnt} dishes · ${c.rests} spots</div></div>
-      <div class="score" style="color:${rColor(c.a)}">${fmt(c.a)}</div>
-    </div>`).join('');
+  const allRests=Object.entries(byR).map(([n,items])=>{
+    const c=guessCuisine(n);
+    const sorted=[...items].sort((a,b)=>b.rating-a.rating);
+    return{n,a:avgR(items),city:items[0].city,cnt:items.length,cuisine:c,dishes:sorted.slice(0,6)};
+  }).sort((a,b)=>b.a-a.a||a.n.localeCompare(b.n));
+  document.getElementById('rk-rest-blocks').innerHTML=allRests.length?allRests.map(r=>`
+    <div class="rest-block" onclick="showRestaurant('${escJs(r.n)}')">
+      <div class="rest-block-emoji">${r.cuisine.emoji}</div>
+      <div class="rest-block-name">${r.n}</div>
+      <div class="rest-block-meta">${r.city}</div>
+      <div class="rest-block-dishes">${r.dishes.map(d=>`<span title="${d.dish.replace(/"/g,'&quot;')}">${d.emoji}</span>`).join('')}</div>
+      <div class="rest-block-foot">
+        <div class="rest-block-cnt">${r.cnt} dish${r.cnt===1?'':'es'}</div>
+        <div class="rest-block-score" style="color:${rColor(r.a)}">${fmt(r.a)}</div>
+      </div>
+    </div>`).join(''):'<div style="padding:16px;color:var(--faint);font-size:13px">Log a visit to see your restaurants here.</div>';
 }
 
 // ─── RECS ─────────────────────────────────────────────────────────────────────
@@ -1419,6 +1362,7 @@ document.getElementById('modal-overlay').addEventListener('click',e=>{if(e.targe
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 if(isLoggedIn()){
   document.getElementById('login-screen').classList.add('hidden');
+  showAppShell();
   bootApp();
 }else{
   initLogin();
