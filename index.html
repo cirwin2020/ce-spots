@@ -17,17 +17,16 @@
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:14px;min-height:100vh}
 
 /* NAV */
-.topbar{background:var(--pink);border-bottom:none;padding:0 28px;display:flex;align-items:center;justify-content:space-between;height:62px;position:sticky;top:0;z-index:100}
+.topbar{background:#fff;border-bottom:1px solid var(--border);padding:0 28px;display:flex;align-items:center;justify-content:space-between;height:62px;position:sticky;top:0;z-index:100}
 .logo{font-size:20px;font-weight:700;display:flex;align-items:center}
-.logo .c,.logo .e{color:#fff}
-.logo .plus{color:rgba(255,255,255,0.7);margin:0 1px}
-.logo .sub{font-size:11px;font-weight:400;color:rgba(255,255,255,0.6);margin-left:7px}
+.logo .c,.logo .e{color:var(--pink)}
+.logo .plus{color:var(--blue);margin:0 1px}
 .nav{display:flex;gap:1px}
-.nb{font-size:15px;padding:5px 14px;border-radius:7px;border:none;background:transparent;color:rgba(255,255,255,0.65);cursor:pointer;font-family:inherit;transition:all .15s}
-.nb:hover{background:rgba(255,255,255,0.15);color:#fff}
-.nb.active{background:rgba(255,255,255,0.2);color:#fff;font-weight:700}
-.add-btn{font-size:13px;padding:7px 16px;border-radius:8px;border:1.5px solid #fff;background:#fff;color:var(--pink);cursor:pointer;font-family:inherit;font-weight:600;transition:all .15s;white-space:nowrap}
-.add-btn:hover{background:rgba(255,255,255,0.85)}
+.nb{font-size:15px;padding:5px 14px;border-radius:7px;border:none;background:transparent;color:var(--pink);cursor:pointer;font-family:inherit;transition:all .15s;font-weight:500}
+.nb:hover{background:var(--pink-l);color:var(--pink-d)}
+.nb.active{background:var(--pink-l);color:var(--pink-d);font-weight:700}
+.add-btn{font-size:13px;padding:7px 16px;border-radius:8px;border:1.5px solid var(--pink);background:var(--pink);color:#fff;cursor:pointer;font-family:inherit;font-weight:600;transition:all .15s;white-space:nowrap}
+.add-btn:hover{background:var(--pink-d)}
 
 /* PAGES */
 .page{display:none;padding:20px 24px 48px;max-width:1080px;margin:0 auto}
