@@ -764,7 +764,6 @@ function buildExploreRecs(){
   const topDishes=dishProfile.filter(d=>d.avg>=8).slice(0,5);
   const lovedRests=Object.entries(groupBy(data,'restaurant')).map(([n,items])=>({n,a:avgR(items),c:guessCuisine(n),city:items[0].city,cnt:items.length})).filter(r=>r.a>=8.8&&r.cnt>=1).sort((a,b)=>b.a-a.a).slice(0,6);
   const pool=[];
-  Object.entries(DEFAULT_TRY).forEach(([section,items])=>items.forEach(item=>pool.push({name:item.name,section,star:!!item.star})));
   Object.entries(RECOMMENDATION_POOL).forEach(([section,items])=>items.forEach(item=>pool.push({name:item.name,section,star:false})));
   const seen=new Set();
   const candidates=[];
@@ -788,7 +787,7 @@ function buildExploreRecs(){
         reasons.push(`Similar to ${r.n} (${fmt(r.a)})`);
       }
     });
-    if(item.star){score+=0.15;reasons.push('Priority pick on our list');}
+    if(item.star){score+=0.15;}
     const city=sectionToCity(item.section);
     const cityDishes=data.filter(d=>d.city===city);
     if(cityDishes.length>=3&&avgR(cityDishes)>=8.5)score+=0.06;
