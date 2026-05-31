@@ -138,7 +138,7 @@ tr.trow:hover td{background:#FDF7FD;cursor:pointer}
 .dk-score{font-size:18px;font-weight:700;margin-top:6px}
 
 /* RECS */
-.tc{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:14px;transition:all .15s}
+.tc{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:14px;transition:all .15s;cursor:pointer}
 .tc:hover{border-color:var(--pink-b);background:var(--pink-l)}
 .te{font-size:22px;margin-bottom:6px}
 .tcn{font-size:13px;font-weight:600}
@@ -246,11 +246,12 @@ tr.trow:hover td{background:#FDF7FD;cursor:pointer}
 .field textarea{resize:vertical;min-height:60px}
 .f2{display:grid;grid-template-columns:1fr 1fr;gap:11px}
 .divider{border:none;border-top:1px solid var(--border);margin:16px 0}
-.dish-head{display:grid;grid-template-columns:1fr 38px 75px 26px;gap:7px;padding:0 11px;margin-bottom:4px}
+.dish-head{display:grid;grid-template-columns:1fr 48px 75px 26px;gap:7px;padding:0 11px;margin-bottom:4px}
 .dish-head span{font-size:10px;font-weight:600;color:var(--faint);text-transform:uppercase;letter-spacing:.4px}
 .dish-list{display:flex;flex-direction:column;gap:7px;margin-bottom:9px}
-.dish-row{display:grid;grid-template-columns:1fr 38px 75px 26px;gap:7px;align-items:center;background:var(--pink-l);border-radius:8px;padding:7px 11px}
-.dish-row input{background:#fff}
+.dish-row{display:grid;grid-template-columns:1fr 48px 75px 26px;gap:7px;align-items:center;background:var(--pink-l);border-radius:8px;padding:7px 11px}
+.dish-row input,.dish-row select{background:#fff}
+.emoji-sel{padding:6px 2px;font-size:15px;border:1px solid #DDD;border-radius:8px;font-family:inherit;cursor:pointer;width:100%;text-align:center}
 .rm-btn{background:none;border:none;color:var(--faint);font-size:16px;cursor:pointer;padding:0;line-height:1}
 .rm-btn:hover{color:var(--pink)}
 .add-dish-btn{font-size:12px;color:var(--blue);cursor:pointer;background:none;border:none;font-family:inherit;padding:0}
@@ -817,6 +818,47 @@ function addRecToTry(name,section){
 
 function escJs(s){return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'");}
 
+function getEmojiBank(){
+  const set=new Set(['🍽️']);
+  SEED.forEach(d=>{if(d.emoji)set.add(d.emoji);});
+  data.forEach(d=>{if(d.emoji)set.add(d.emoji);});
+  return[...set];
+}
+
+function emojiSelectHtml(selected='🍽️'){
+  return getEmojiBank().map(e=>`<option value="${e}"${e===selected?' selected':''}>${e}</option>`).join('');
+}
+
+function showTasteProfile(cat,emoji){
+  const items=data.filter(d=>guessCuisine(d.restaurant).cat===cat);
+  if(!items.length)return;
+  const a=avgR(items);
+  const byR=groupBy(items,'restaurant');
+  const restRank=Object.entries(byR).map(([n,it])=>({n,a:avgR(it),cnt:it.length,city:it[0].city})).sort((a,b)=>b.a-a.a);
+  const sorted=[...items].sort((a,b)=>b.rating-a.rating);
+  const best=sorted[0];
+  document.getElementById('dp-cuisine').textContent='Taste Profile';
+  document.getElementById('dp-name').textContent=`${emoji} ${cat}`;
+  document.getElementById('dp-meta').textContent=`${items.length} dishes · ${restRank.length} restaurants`;
+  document.getElementById('dp-score').textContent=fmt(a);
+  document.getElementById('dp-score').style.color=rColor(a);
+  document.getElementById('dp-score-lbl').textContent='avg rating';
+  document.getElementById('dp-badge').innerHTML=badge(a);
+  document.getElementById('dp-body').innerHTML=`
+    <div class="dp-stat-grid">
+      <div class="dp-stat"><div class="dp-stat-l">Dishes tried</div><div class="dp-stat-v">${items.length}</div></div>
+      <div class="dp-stat"><div class="dp-stat-l">Amazing (9+)</div><div class="dp-stat-v" style="color:#7A35A0">${items.filter(d=>d.rating>=9).length}</div></div>
+      <div class="dp-stat"><div class="dp-stat-l">Restaurants</div><div class="dp-stat-v">${restRank.length}</div></div>
+      <div class="dp-stat"><div class="dp-stat-l">Hit rate</div><div class="dp-stat-v">${items.length?((items.filter(d=>d.rating>=9).length/items.length)*100).toFixed(0):0}%</div></div>
+    </div>
+    ${best?`<div class="dp-sec">Best dish</div><div class="dp-highlight"><div class="dp-hl">⭐ Top pick</div><div style="font-size:14px;font-weight:500">${best.emoji} ${best.dish}</div><div style="font-size:13px;color:var(--pink);font-weight:600;margin-top:3px">${best.restaurant} · ${fmt(best.rating)}</div></div>`:''}
+    <div class="dp-sec">Restaurants in this profile</div>
+    ${restRank.map(r=>`<div class="dp-dish" onclick="showRestaurant('${r.n.replace(/'/g,"\\'")}')"><div><div class="dp-dish-name">${guessCuisine(r.n).emoji} ${r.n}</div><div style="font-size:11px;color:var(--muted);margin-top:2px">${r.city} · ${r.cnt} dishes</div></div><div style="display:flex;align-items:center;gap:6px">${badge(r.a)}<div class="dp-dish-sc" style="color:${rColor(r.a)}">${fmt(r.a)}</div></div></div>`).join('')}
+    <div class="dp-sec">All dishes, ranked</div>
+    ${sorted.map(d=>`<div class="dp-dish" onclick="showDish(${d.id})"><div><div class="dp-dish-name">${d.emoji} ${d.dish}</div><div style="font-size:11px;color:var(--muted);margin-top:2px">${d.restaurant} · ${d.city}</div></div><div style="display:flex;align-items:center;gap:6px">${badge(d.rating)}<div class="dp-dish-sc" style="color:${rColor(d.rating)}">${fmt(d.rating)}</div></div></div>`).join('')}`;
+  openPanel();
+}
+
 // ─── NAVIGATION ──────────────────────────────────────────────────────────────
 function nav(id,btn){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
@@ -1033,7 +1075,8 @@ function buildProfile(){
 function renderRecs(){
   const profile=buildProfile();
   document.getElementById('taste-grid').innerHTML=profile.slice(0,6).map(p=>`
-    <div class="tc"><div class="te">${p.emoji}</div><div class="tcn">${p.cat}</div><div class="tcs" style="color:${rColor(p.avg)}">${fmt(p.avg)}</div><div class="tcm">${p.count} dishes · ${p.rests.length} spots</div></div>`).join('');
+    <div class="tc" onclick="showTasteProfile('${escJs(p.cat)}','${p.emoji}')">
+      <div class="te">${p.emoji}</div><div class="tcn">${p.cat}</div><div class="tcs" style="color:${rColor(p.avg)}">${fmt(p.avg)}</div><div class="tcm">${p.count} dishes · ${p.rests.length} spots</div></div>`).join('');
 
   const v=visited();
   const allTry=[];
@@ -1264,7 +1307,7 @@ function openModal(prefillName,prefillCity){
 function closeModal(){document.getElementById('modal-overlay').classList.remove('open');}
 function addDishRow(){
   dishCount++;const row=document.createElement('div');row.className='dish-row';row.id='dr-'+dishCount;
-  row.innerHTML=`<input type="text" placeholder="e.g. Crispy Rice" class="dn" /><input type="text" placeholder="🍽️" class="de" maxlength="2" style="text-align:center;font-size:15px;padding:7px 3px" /><input type="number" placeholder="8.5" min="1" max="10" step="0.1" class="dr" /><button class="rm-btn" onclick="document.getElementById('dr-${dishCount}').remove()">×</button>`;
+  row.innerHTML=`<input type="text" placeholder="e.g. Crispy Rice" class="dn" /><select class="de emoji-sel">${emojiSelectHtml('🍽️')}</select><input type="number" placeholder="8.5" min="1" max="10" step="0.1" class="dr" /><button class="rm-btn" onclick="document.getElementById('dr-${dishCount}').remove()">×</button>`;
   document.getElementById('dish-list').appendChild(row);
 }
 function saveEntry(){
@@ -1277,7 +1320,7 @@ function saveEntry(){
   let added=0;
   document.querySelectorAll('.dish-row').forEach(row=>{
     const dish=row.querySelector('.dn').value.trim();
-    const emoji=row.querySelector('.de').value.trim()||'🍽️';
+    const emoji=row.querySelector('.de').value||'🍽️';
     const rating=parseFloat(row.querySelector('.dr').value);
     if(!dish||isNaN(rating)||rating<1||rating>10)return;
     data.push({id:Date.now()+Math.random(),restaurant:restRaw,city,date,dish,emoji,rating,notes});
