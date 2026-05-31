@@ -58,18 +58,18 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 /* STAT CARDS */
 .stat{background:var(--card);border-radius:var(--r);border:1px solid var(--border);padding:14px 16px}
 .sl{font-size:11px;color:var(--muted);font-weight:500;margin-bottom:5px}
-.sv{font-size:25px;font-weight:700;line-height:1}
+.sv{font-size:25px;font-weight:700;line-height:1;color:var(--pink)}
 .ss{font-size:11px;color:var(--faint);margin-top:4px;line-height:1.4}
 
 /* LEGENDARY */
-.leg{background:var(--pink);border:1px solid var(--pink-d);border-radius:var(--r);padding:18px 22px;margin-bottom:14px}
-.leg-title{font-size:15px;font-weight:700;color:#fff;margin-bottom:14px;letter-spacing:.2px}
-.leg-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.22);cursor:pointer;border-radius:6px;transition:background .12s}
+.leg{background:var(--pink);border:1px solid var(--pink-d);border-radius:var(--r);padding:14px 18px;margin-bottom:14px}
+.leg-title{font-size:13px;font-weight:700;color:#fff;margin-bottom:10px;letter-spacing:.2px}
+.leg-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.22);cursor:pointer;border-radius:6px;transition:background .12s}
 .leg-row:last-child{border-bottom:none}
-.leg-row:hover{background:rgba(255,255,255,.12);margin:0 -8px;padding:10px 8px}
-.leg-dish{font-size:18px;font-weight:600;color:#fff;line-height:1.25}
-.leg-rest{font-size:13px;color:rgba(255,255,255,.78);margin-top:4px}
-.leg-sc{font-size:24px;font-weight:700;color:#fff}
+.leg-row:hover{background:rgba(255,255,255,.12);margin:0 -6px;padding:8px 6px}
+.leg-dish{font-size:15px;font-weight:600;color:#fff;line-height:1.25}
+.leg-rest{font-size:12px;color:rgba(255,255,255,.78);margin-top:3px}
+.leg-sc{font-size:20px;font-weight:700;color:#fff}
 
 /* LIST ROWS */
 .lr{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid #F5EEF5;cursor:pointer;transition:background .12s;border-radius:7px;margin:0 -8px;padding-left:8px;padding-right:8px}
@@ -285,7 +285,7 @@ tr.trow:hover td{background:#FDF7FD;cursor:pointer}
 
 <!-- OVERVIEW -->
 <div id="page-overview" class="page active">
-  <div class="ph"><h1><span class="c">C</span><span class="plus">+</span><span class="e">E</span> Spots</h1><p id="ov-sub"></p></div>
+  <div class="ph"><h1>Overview</h1><p id="ov-sub"></p></div>
   <div class="g4" id="ov-stats"></div>
   <div class="leg" id="ov-leg"></div>
   <div class="g13">
@@ -735,11 +735,11 @@ function renderOverview(){
   document.getElementById('ov-stats').innerHTML=`
     <div class="stat"><div class="sl">Restaurants</div><div class="sv">${rests}</div><div class="ss">${cities} cities explored</div></div>
     <div class="stat"><div class="sl">Dishes tried</div><div class="sv">${data.length}</div><div class="ss">and counting...</div></div>
-    <div class="stat"><div class="sl">Avg rating</div><div class="sv" style="color:${rColor(a)}">${fmt(a)}</div><div class="ss">out of 10</div></div>
-    <div class="stat"><div class="sl">Amazing (9+)</div><div class="sv" style="color:#7A35A0">${amazing.length}</div><div class="ss">${((amazing.length/data.length)*100).toFixed(0)}% of all dishes</div></div>`;
+    <div class="stat"><div class="sl">Avg rating</div><div class="sv">${fmt(a)}</div><div class="ss">out of 10</div></div>
+    <div class="stat"><div class="sl">Amazing (9+)</div><div class="sv">${amazing.length}</div><div class="ss">${((amazing.length/data.length)*100).toFixed(0)}% of all dishes</div></div>`;
 
   const leg=data.filter(d=>d.rating>=9.8).sort((a,b)=>b.rating-a.rating);
-  document.getElementById('ov-leg').innerHTML=`<div class="leg-title">🏆 Legendary Dishes — rated 9.8 or above</div>${leg.map(d=>`
+  document.getElementById('ov-leg').innerHTML=`<div class="leg-title">Top Rated — 9.8 or above</div>${leg.map(d=>`
     <div class="leg-row" onclick="showDish(${d.id})">
       <div><div class="leg-dish">${d.emoji} ${d.dish}</div><div class="leg-rest">${d.restaurant} · ${d.city}</div></div>
       <div class="leg-sc">${fmt(d.rating)}</div>
@@ -818,7 +818,7 @@ function renderDrinks(){
   document.getElementById('dk-sub').textContent=`${drinks.length} drinks logged`;
   document.getElementById('dk-stats').innerHTML=`
     <div class="stat"><div class="sl">Drinks tried</div><div class="sv">${allDrinks.length}</div><div class="ss">across all visits</div></div>
-    <div class="stat"><div class="sl">Avg drink rating</div><div class="sv" style="color:${rColor(a||0)}">${drinks.length?fmt(a):'—'}</div><div class="ss">out of 10</div></div>
+    <div class="stat"><div class="sl">Avg drink rating</div><div class="sv">${drinks.length?fmt(a):'—'}</div><div class="ss">out of 10</div></div>
     <div class="stat"><div class="sl">Best drink</div><div class="sv" style="font-size:16px;margin-top:2px">${best?best.emoji:'—'}</div><div class="ss">${best?best.dish:'None yet'}</div></div>
     <div class="stat"><div class="sl">Top spot</div><div class="sv" style="font-size:14px;margin-top:2px">${best?best.restaurant:'—'}</div><div class="ss">${best?best.city:''}</div></div>`;
   document.getElementById('dk-list').innerHTML=drinks.map(d=>`
