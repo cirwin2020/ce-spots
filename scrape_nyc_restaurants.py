@@ -1,13 +1,22 @@
 """
 Scrape restaurants via Google Places Text Search for Manhattan (NYC) and the Hamptons.
 Requires GOOGLE_PLACES_API_KEY in .env or environment. See docs/SCRAPER_SETUP.md.
+
+Writes data/restaurants.json (+ CSV) and optionally syncs to Google Sheets via save_restaurants.
 """
+import argparse
 import csv
+import json
 import os
 import sys
 import time
 
 import requests
+
+SHEETS_API = os.environ.get(
+    "CE_SPOTS_API",
+    "https://script.google.com/macros/s/AKfycbxzlho_0KN_u5IMpCKIeoIMcJ0NQVVnJPU78Aw589nUPquecojnds5NHDeME2ytK-46/exec",
+)
 
 # (query, city label for app, neighborhood label for CSV)
 SEARCHES = [
@@ -117,17 +126,38 @@ def extract(place, city, neighborhood):
     }
 
 
-def main():
-    api_key = load_api_key()
-    if not api_key:
-        print(
-            "Missing GOOGLE_PLACES_API_KEY.\n"
-            "  cp .env.example .env   # then paste your key\n"
-            "  See docs/SCRAPER_SETUP.md",
-            file=sys.stderr,
-        )
-        sys.exit(1)
+def save_outputs(seen, root):
+    data_dir = os.path.join(root, "data")
+    os.makedirs(data_dir, exist_ok=True)
+    rows = list(seen.values())
+    csv_path = os.path.join(data_dir, "restaurants.csv")
+    json_path = os.path.join(data_dir, "restaurants.json")
+    with open(csv_path, "w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=CSV_FIELDS)
+        writer.writeheader()
+        writer.writerows(rows)
+    with open(json_path, "w", encoding="utf-8") as f:
+        json.dump(rows, f, ensure_ascii=False, indent=0)
+    return csv_path, json_path, rows
 
+
+def sync_to_sheets(restaurants):
+    body = json.dumps({"action": "save_restaurants", "restaurants": restaurants})
+    resp = requests.post(
+        SHEETS_API,
+        data=body,
+        headers={"Content-Type": "text/plain"},
+        timeout=120,
+        allow_redirects=True,
+    )
+    try:
+        out = resp.json()
+    except Exception:
+        out = {"ok": False, "raw": resp.text[:500]}
+    return out
+
+
+def scrape_all(api_key):
     seen = {}
     for query, city, neighborhood in SEARCHES:
         label = f"{neighborhood} ({city})"
@@ -144,21 +174,55 @@ def main():
         except Exception as e:
             print(f"  → Error: {e}")
         time.sleep(0.5)
+    return seen
 
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--sync-only",
+        action="store_true",
+        help="Upload existing data/restaurants.json to Sheets (no Places API calls)",
+    )
+    parser.add_argument("--no-sync", action="store_true", help="Skip Google Sheets upload")
+    args = parser.parse_args()
     root = os.path.dirname(os.path.abspath(__file__))
-    data_dir = os.path.join(root, "data")
-    os.makedirs(data_dir, exist_ok=True)
-    out = os.path.join(data_dir, "restaurants.csv")
 
-    with open(out, "w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=CSV_FIELDS)
-        writer.writeheader()
-        writer.writerows(seen.values())
+    if args.sync_only:
+        json_path = os.path.join(root, "data", "restaurants.json")
+        if not os.path.isfile(json_path):
+            print(f"No file at {json_path}", file=sys.stderr)
+            sys.exit(1)
+        with open(json_path, encoding="utf-8") as f:
+            rows = json.load(f)
+        print(f"Loaded {len(rows)} restaurants from {json_path}")
+    else:
+        api_key = load_api_key()
+        if not api_key:
+            print(
+                "Missing GOOGLE_PLACES_API_KEY.\n"
+                "  cp .env.example .env   # then paste your key\n"
+                "  See docs/SCRAPER_SETUP.md",
+                file=sys.stderr,
+            )
+            sys.exit(1)
+        seen = scrape_all(api_key)
+        _, json_path, rows = save_outputs(seen, root)
+        nyc = sum(1 for r in rows if r["city"] == "NYC")
+        ham = sum(1 for r in rows if r["city"] == "Hamptons")
+        print(f"\n✅ Scraped {len(rows)} restaurants ({nyc} NYC, {ham} Hamptons)")
+        print(f"   {json_path}")
 
-    nyc = sum(1 for r in seen.values() if r["city"] == "NYC")
-    ham = sum(1 for r in seen.values() if r["city"] == "Hamptons")
-    print(f"\n✅ Done! {len(seen)} restaurants ({nyc} NYC, {ham} Hamptons)")
-    print(f"   Saved to {out}")
+    if not args.no_sync:
+        print("Syncing to Google Sheets...")
+        result = sync_to_sheets(rows)
+        if result.get("ok"):
+            print(f"✅ Sheets updated ({result.get('count', len(rows))} restaurants)")
+            print("   Deploy google-apps-script/Code.gs if GET still has no restaurants.")
+        else:
+            print("⚠️  Sheets sync failed:", result)
+            print("   Paste Code.gs into Apps Script and redeploy, then run:")
+            print("   python3 scrape_nyc_restaurants.py --sync-only")
 
 
 if __name__ == "__main__":

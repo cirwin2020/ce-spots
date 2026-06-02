@@ -140,6 +140,8 @@ tr.trow:hover td{background:#FDF7FD;cursor:pointer}
 .rest-block-cnt{font-size:11px;color:var(--muted)}
 .rest-block-dishes{display:flex;flex-wrap:wrap;gap:4px;margin-top:2px}
 .rest-block-dishes span{font-size:16px;line-height:1}
+.rest-block.not-visited{opacity:.92;border-style:dashed}
+.rest-block-tag{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--muted)}
 
 .drink-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin-bottom:14px}
 .drink-card{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;cursor:pointer;transition:all .15s}
@@ -389,7 +391,8 @@ tr.trow:hover td{background:#FDF7FD;cursor:pointer}
 
 <!-- RANKINGS -->
 <div id="page-rankings" class="page">
-  <div class="ph"><h1>Rankings</h1><p>Every spot you've been to — tap to see dishes.</p></div>
+  <div class="ph"><h1>Rankings</h1><p id="rk-sub">Restaurants you've been to — tap to see dishes.</p></div>
+  <div class="filters"><div class="srch" style="flex:1"><input type="text" id="rk-search" placeholder="Search NYC & Hamptons restaurants to log a new spot..." oninput="rkSearch=this.value;renderRankings()"></div></div>
   <div class="rest-grid" id="rk-rest-blocks"></div>
 </div>
 
@@ -456,9 +459,9 @@ tr.trow:hover td{background:#FDF7FD;cursor:pointer}
     <h2 id="modal-title">Log a Visit</h2>
     <div class="modal-sub" id="modal-sub">Fill in the restaurant and rate each dish you tried.</div>
     <div class="f2">
-      <div class="field"><label>Restaurant</label><input id="f-rest" placeholder="e.g. Nobu" /></div>
+      <div class="field"><label>Restaurant</label><input id="f-rest" list="rest-datalist" placeholder="e.g. Nobu" autocomplete="off" onfocus="updateRestDatalist()" /><datalist id="rest-datalist"></datalist></div>
       <div class="field"><label>City</label>
-        <select id="f-city" onchange="handleCityChange()">
+        <select id="f-city" onchange="handleCityChange();updateRestDatalist()">
           <option>NYC</option><option>Stockholm</option><option>Palm Beach</option>
           <option>Ithaca</option><option>Bangor</option><option>Hamptons</option>
           <option value="__custom__">Other (type below) →</option>
@@ -747,28 +750,42 @@ const DRINK_CATS={
 
 // ─── STATE ────────────────────────────────────────────────────────────────────
 const API='https://script.google.com/macros/s/AKfycbxzlho_0KN_u5IMpCKIeoIMcJ0NQVVnJPU78Aw589nUPquecojnds5NHDeME2ytK-46/exec';
-let data=[],tryLists={},todos=[],sortCol='rating',sortDir=-1,cityF='all',ratingF=null,drinkF='all';
+let data=[],restaurants=[],tryLists={},todos=[],sortCol='rating',sortDir=-1,cityF='all',ratingF=null,drinkF='all';
+let _restKeyMap=null;
+
+async function loadRestaurantsFile(){
+  try{
+    const res=await fetch('data/restaurants.json?'+Date.now());
+    if(!res.ok)return false;
+    const list=await res.json();
+    if(Array.isArray(list)&&list.length){restaurants=list;_restKeyMap=null;return true;}
+  }catch(e){}
+  return false;
+}
 
 async function load(){
   // tryLists and todos stay local (personal preferences)
   try{tryLists=JSON.parse(localStorage.getItem('ce_try4')||'null')||JSON.parse(JSON.stringify(DEFAULT_TRY));}catch(e){tryLists=JSON.parse(JSON.stringify(DEFAULT_TRY));}
   try{todos=JSON.parse(localStorage.getItem('ce_todos')||'null')||JSON.parse(JSON.stringify(DEFAULT_TODOS));}catch(e){todos=JSON.parse(JSON.stringify(DEFAULT_TODOS));}
-  // dishes load from Google Sheets
+  // dishes + restaurant directory from Google Sheets
   try{
     const res=await fetch(API);
     const json=await res.json();
     if(json.ok&&json.data&&json.data.length>0){
       data=json.data.map(r=>normalizeDish({id:r.id,dish:String(r.dish||''),restaurant:String(r.restaurant||''),city:String(r.city||''),rating:parseFloat(r.rating)||0,notes:String(r.notes||''),date:String(r.date||''),emoji:String(r.emoji||'🍽️'),type:r.type||'dish'}));
     } else {
-      // Sheet is empty — seed it with default data
       data=JSON.parse(JSON.stringify(SEED)).map(normalizeDish);
       syncToSheets();
     }
+    if(json.restaurants&&json.restaurants.length){
+      restaurants=json.restaurants;
+      _restKeyMap=null;
+    }
   }catch(e){
-    // Offline fallback
     try{data=(JSON.parse(localStorage.getItem('ce_v4')||'null')||JSON.parse(JSON.stringify(SEED))).map(normalizeDish);}catch(e2){data=JSON.parse(JSON.stringify(SEED)).map(normalizeDish);}
     console.warn('Sheets unavailable, using local data',e);
   }
+  if(!restaurants.length)await loadRestaurantsFile();
 }
 function save(){
   // Save personal tabs locally
@@ -798,7 +815,45 @@ const fmtD=d=>{
   return s;
 };
 function groupBy(arr,key){return arr.reduce((a,i)=>{const k=i[key];(a[k]=a[k]||[]).push(i);return a;},{});}
-function visited(){return new Set(data.map(d=>d.restaurant.toLowerCase().trim()));}
+function normRestKey(s){return String(s||'').toLowerCase().replace(/[''`´]/g,'').replace(/&/g,'and').replace(/[^a-z0-9]/g,'');}
+function getRestKeyMap(){
+  if(!_restKeyMap){
+    _restKeyMap=new Map();
+    restaurants.forEach(r=>{const k=normRestKey(r.name);if(k&&!_restKeyMap.has(k))_restKeyMap.set(k,r);});
+  }
+  return _restKeyMap;
+}
+function matchRestaurant(name){
+  const key=normRestKey(name);
+  if(!key)return null;
+  const map=getRestKeyMap();
+  if(map.has(key))return map.get(key);
+  for(const[k,r]of map){
+    if(k.length>=4&&key.length>=4&&(k.includes(key)||key.includes(k)))return r;
+  }
+  return null;
+}
+function canonicalRestName(name){const m=matchRestaurant(name);return m?m.name:String(name||'').trim();}
+function dishesForRestaurant(name){
+  const canon=canonicalRestName(name);
+  const key=normRestKey(canon);
+  return data.filter(d=>normRestKey(d.restaurant)===key||canonicalRestName(d.restaurant)===canon);
+}
+function visited(){
+  const v=new Set();
+  data.forEach(d=>{const k=normRestKey(canonicalRestName(d.restaurant));if(k)v.add(k);});
+  return v;
+}
+function updateRestDatalist(){
+  const dl=document.getElementById('rest-datalist');
+  if(!dl||!restaurants.length)return;
+  const city=document.getElementById('f-city').value;
+  const pool=restaurants.filter(r=>{
+    if(!city||city==='__custom__')return true;
+    return r.city===city;
+  }).sort((a,b)=>a.name.localeCompare(b.name));
+  dl.innerHTML=pool.slice(0,500).map(r=>`<option value="${r.name.replace(/"/g,'&quot;')}">`).join('');
+}
 function rColor(r){if(r>=9)return'#7A35A0';if(r>=8)return'var(--blue)';if(r>=7)return'#6055A0';if(r>=6)return'var(--pink)';return'#9A2525';}
 function badge(r){
   if(r>=9)return'<span class="badge ba">Amazing</span>';
@@ -873,7 +928,7 @@ function buildExploreRecs(){
   const seen=new Set();
   const candidates=[];
   pool.forEach(item=>{
-    const key=item.name.toLowerCase().trim();
+    const key=normRestKey(canonicalRestName(item.name));
     if(v.has(key)||seen.has(key))return;
     seen.add(key);
     const cuisine=guessCuisine(item.name);
@@ -1067,24 +1122,53 @@ function renderDrinks(){
 }
 
 // ─── RANKINGS ────────────────────────────────────────────────────────────────
+let rkSearch='';
+function rkBlockFromDir(r){
+  const items=dishesForRestaurant(r.name);
+  const sorted=[...items].sort((a,b)=>b.rating-a.rating);
+  const c=r.cuisine?{cat:r.cuisine,emoji:guessCuisine(r.name).emoji}:guessCuisine(r.name);
+  return{name:r.name,city:r.city,neighborhood:r.neighborhood||'',cuisine:c,sorted,a:items.length?avgR(items):null,cnt:items.length,google_rating:r.google_rating,visited:items.length>0};
+}
+function rkVisitedBlocks(){
+  const groups={};
+  data.forEach(d=>{
+    const canon=canonicalRestName(d.restaurant);
+    const key=normRestKey(canon)||canon;
+    if(!groups[key])groups[key]={name:canon,items:[]};
+    groups[key].items.push(d);
+  });
+  return Object.values(groups).map(g=>{
+    const dir=matchRestaurant(g.name);
+    const sorted=[...g.items].sort((a,b)=>b.rating-a.rating);
+    const c=dir&&dir.cuisine?{cat:dir.cuisine,emoji:guessCuisine(g.name).emoji}:guessCuisine(g.name);
+    return{name:g.name,city:dir?dir.city:(g.items[0].city||''),neighborhood:dir?(dir.neighborhood||''):'',cuisine:c,sorted,a:avgR(g.items),cnt:g.items.length,google_rating:dir?dir.google_rating:'',visited:true};
+  }).sort((a,b)=>(b.a||0)-(a.a||0));
+}
 function renderRankings(){
-  const byR=groupBy(data,'restaurant');
-  const allRests=Object.entries(byR).map(([n,items])=>{
-    const c=guessCuisine(n);
-    const sorted=[...items].sort((a,b)=>b.rating-a.rating);
-    return{n,a:avgR(items),city:items[0].city,cnt:items.length,cuisine:c,dishes:sorted.slice(0,6)};
-  }).sort((a,b)=>b.a-a.a||a.n.localeCompare(b.n));
-  document.getElementById('rk-rest-blocks').innerHTML=allRests.length?allRests.map(r=>`
-    <div class="rest-block" onclick="showRestaurant('${escJs(r.n)}')">
+  const sub=document.getElementById('rk-sub');
+  const q=rkSearch.trim().toLowerCase();
+  let blocks;
+  if(q&&restaurants.length){
+    blocks=restaurants.filter(r=>r.name.toLowerCase().includes(q)||(r.neighborhood||'').toLowerCase().includes(q)||(r.cuisine||'').toLowerCase().includes(q))
+      .slice(0,150).map(rkBlockFromDir)
+      .sort((a,b)=>{if(a.visited!==b.visited)return a.visited?-1:1;if(a.visited&&b.visited)return(b.a||0)-(a.a||0);return(parseFloat(b.google_rating)||0)-(parseFloat(a.google_rating)||0);});
+    if(sub)sub.textContent=`${blocks.length} match${blocks.length===1?'':'es'} for “${rkSearch.trim()}” — tap a spot to log a visit`;
+  }else{
+    blocks=rkVisitedBlocks();
+    if(sub)sub.textContent=restaurants.length?`${blocks.length} spot${blocks.length===1?'':'s'} visited · search ${restaurants.length} NYC & Hamptons restaurants above`:'Every spot you\'ve been to — tap to see dishes.';
+  }
+  const empty=q?`<div style="padding:16px;color:var(--faint);font-size:13px">No restaurants match “${rkSearch.trim()}”.</div>`:'<div style="padding:16px;color:var(--faint);font-size:13px">Log a visit to see your restaurants here.</div>';
+  document.getElementById('rk-rest-blocks').innerHTML=blocks.length?blocks.map(r=>`
+    <div class="rest-block${r.visited?'':' not-visited'}" onclick="showRestaurant('${escJs(r.name)}')">
       <div class="rest-block-emoji">${r.cuisine.emoji}</div>
-      <div class="rest-block-name">${r.n}</div>
-      <div class="rest-block-meta">${r.city}</div>
-      <div class="rest-block-dishes">${r.dishes.map(d=>`<span title="${d.dish.replace(/"/g,'&quot;')}">${d.emoji}</span>`).join('')}</div>
+      <div class="rest-block-name">${r.name}</div>
+      <div class="rest-block-meta">${r.city}${r.neighborhood?' · '+r.neighborhood:''}</div>
+      <div class="rest-block-dishes">${r.sorted.slice(0,6).map(d=>`<span title="${d.dish.replace(/"/g,'&quot;')}">${d.emoji}</span>`).join('')}${!r.cnt?'<span class="rest-block-tag">Not visited yet</span>':''}</div>
       <div class="rest-block-foot">
-        <div class="rest-block-cnt">${r.cnt} dish${r.cnt===1?'':'es'}</div>
-        <div class="rest-block-score" style="color:${rColor(r.a)}">${fmt(r.a)}</div>
+        <div class="rest-block-cnt">${r.cnt?r.cnt+' dish'+(r.cnt===1?'':'es'):'Tap to log'}</div>
+        <div class="rest-block-score" style="color:${r.visited?rColor(r.a):'var(--muted)'}">${r.visited?fmt(r.a):(r.google_rating?fmt(parseFloat(r.google_rating))+' ★':'—')}</div>
       </div>
-    </div>`).join(''):'<div style="padding:16px;color:var(--faint);font-size:13px">Log a visit to see your restaurants here.</div>';
+    </div>`).join(''):empty;
 }
 
 // ─── RECS ─────────────────────────────────────────────────────────────────────
@@ -1208,33 +1292,58 @@ function openPanel(){document.getElementById('panel-bg').classList.add('open');d
 function closePanel(){document.getElementById('panel-bg').classList.remove('open');document.getElementById('detail-panel').classList.remove('open');}
 
 function showRestaurant(name){
-  const items=data.filter(d=>d.restaurant===name);if(!items.length)return;
-  const a=avgR(items),city=items[0].city,cuisine=guessCuisine(name);
+  const dir=matchRestaurant(name);
+  const display=dir?dir.name:canonicalRestName(name);
+  const items=dishesForRestaurant(display);
+  const city=dir?dir.city:(items[0]?items[0].city:'');
+  const cuisine=dir&&dir.cuisine?{cat:dir.cuisine,emoji:guessCuisine(display).emoji}:guessCuisine(display);
   const dates=[...new Set(items.filter(d=>d.date).map(d=>fmtD(d.date)))].join(', ');
-  const best=[...items].sort((a,b)=>b.rating-a.rating)[0];
-  const worst=[...items].sort((a,b)=>a.rating-b.rating)[0];
-  document.getElementById('dp-cuisine').textContent=`${cuisine.emoji} ${cuisine.cat}`;
-  document.getElementById('dp-name').textContent=name;
-  document.getElementById('dp-meta').textContent=`${city}${dates?' · '+dates:''}`;
-  document.getElementById('dp-score').textContent=fmt(a);
-  document.getElementById('dp-score').style.color=rColor(a);
-  document.getElementById('dp-score-lbl').textContent='avg rating';
-  document.getElementById('dp-badge').innerHTML=badge(a);
-  document.getElementById('dp-body').innerHTML=`
-    <div class="dp-stat-grid">
-      <div class="dp-stat"><div class="dp-stat-l">Dishes tried</div><div class="dp-stat-v">${items.length}</div></div>
-      <div class="dp-stat"><div class="dp-stat-l">Amazing (9+)</div><div class="dp-stat-v" style="color:#7A35A0">${items.filter(d=>d.rating>=9).length}</div></div>
-      <div class="dp-stat"><div class="dp-stat-l">Highest</div><div class="dp-stat-v" style="color:${rColor(best.rating)}">${fmt(best.rating)}</div></div>
-      <div class="dp-stat"><div class="dp-stat-l">Lowest</div><div class="dp-stat-v" style="color:${rColor(worst.rating)}">${fmt(worst.rating)}</div></div>
-    </div>
-    <div class="dp-sec">Best dish</div>
-    <div class="dp-highlight"><div class="dp-hl">⭐ Top pick</div><div style="font-size:14px;font-weight:500">${best.emoji} ${best.dish}</div><div style="font-size:13px;color:var(--pink);font-weight:600;margin-top:3px">${fmt(best.rating)} · ${tierLabel(best.rating)}</div></div>
-    <div class="dp-sec">All dishes</div>
-    ${[...items].sort((a,b)=>b.rating-a.rating).map(d=>`
-      <div class="dp-dish" onclick="showDish(${d.id})">
-        <div class="dp-dish-name">${d.emoji} ${d.dish}${d.notes?`<span style="font-size:11px;color:var(--faint);margin-left:4px">${d.notes}</span>`:''}</div>
-        <div style="display:flex;align-items:center;gap:6px">${badge(d.rating)}<div class="dp-dish-sc" style="color:${rColor(d.rating)}">${fmt(d.rating)}</div></div>
-      </div>`).join('')}`;
+  const meta=[city,dir&&dir.neighborhood?dir.neighborhood:'',dates].filter(Boolean).join(' · ');
+  if(items.length){
+    const a=avgR(items);
+    const best=[...items].sort((a,b)=>b.rating-a.rating)[0];
+    const worst=[...items].sort((a,b)=>a.rating-b.rating)[0];
+    document.getElementById('dp-cuisine').textContent=`${cuisine.emoji} ${cuisine.cat}`;
+    document.getElementById('dp-name').textContent=display;
+    document.getElementById('dp-meta').textContent=meta;
+    document.getElementById('dp-score').textContent=fmt(a);
+    document.getElementById('dp-score').style.color=rColor(a);
+    document.getElementById('dp-score-lbl').textContent='avg rating';
+    document.getElementById('dp-badge').innerHTML=badge(a);
+    document.getElementById('dp-body').innerHTML=`
+      <div class="dp-stat-grid">
+        <div class="dp-stat"><div class="dp-stat-l">Dishes tried</div><div class="dp-stat-v">${items.length}</div></div>
+        <div class="dp-stat"><div class="dp-stat-l">Amazing (9+)</div><div class="dp-stat-v" style="color:#7A35A0">${items.filter(d=>d.rating>=9).length}</div></div>
+        <div class="dp-stat"><div class="dp-stat-l">Highest</div><div class="dp-stat-v" style="color:${rColor(best.rating)}">${fmt(best.rating)}</div></div>
+        <div class="dp-stat"><div class="dp-stat-l">Lowest</div><div class="dp-stat-v" style="color:${rColor(worst.rating)}">${fmt(worst.rating)}</div></div>
+      </div>
+      <div class="dp-sec">Best dish</div>
+      <div class="dp-highlight"><div class="dp-hl">⭐ Top pick</div><div style="font-size:14px;font-weight:500">${best.emoji} ${best.dish}</div><div style="font-size:13px;color:var(--pink);font-weight:600;margin-top:3px">${fmt(best.rating)} · ${tierLabel(best.rating)}</div></div>
+      <div class="dp-sec">All dishes</div>
+      ${[...items].sort((a,b)=>b.rating-a.rating).map(d=>`
+        <div class="dp-dish" onclick="showDish(${d.id})">
+          <div class="dp-dish-name">${d.emoji} ${d.dish}${d.notes?`<span style="font-size:11px;color:var(--faint);margin-left:4px">${d.notes}</span>`:''}</div>
+          <div style="display:flex;align-items:center;gap:6px">${badge(d.rating)}<div class="dp-dish-sc" style="color:${rColor(d.rating)}">${fmt(d.rating)}</div></div>
+        </div>`).join('')}`;
+  }else if(dir){
+    const gr=parseFloat(dir.google_rating);
+    document.getElementById('dp-cuisine').textContent=`${cuisine.emoji} ${cuisine.cat}`;
+    document.getElementById('dp-name').textContent=display;
+    document.getElementById('dp-meta').textContent=meta||dir.address||'';
+    document.getElementById('dp-score').textContent=dir.google_rating?fmt(gr):'—';
+    document.getElementById('dp-score').style.color=dir.google_rating?rColor(gr):'var(--muted)';
+    document.getElementById('dp-score-lbl').textContent='Google rating';
+    document.getElementById('dp-badge').innerHTML='';
+    document.getElementById('dp-body').innerHTML=`
+      <div class="dp-stat-grid">
+        <div class="dp-stat"><div class="dp-stat-l">Reviews</div><div class="dp-stat-v">${dir.review_count||'—'}</div></div>
+        <div class="dp-stat"><div class="dp-stat-l">Price</div><div class="dp-stat-v">${dir.price||'—'}</div></div>
+      </div>
+      ${dir.address?`<div style="margin-top:12px;font-size:13px;color:var(--muted);line-height:1.5">${dir.address}</div>`:''}
+      <div style="margin-top:16px">
+        <button class="login-btn" style="width:100%" onclick="closePanel();openModal('${escJs(display)}','${escJs(dir.city)}')">+ Log a visit</button>
+      </div>`;
+  }else return;
   openPanel();
 }
 
@@ -1338,8 +1447,11 @@ function addDishRow(){
 }
 function saveEntry(){
   const restRaw=document.getElementById('f-rest').value.trim();
+  const rest=canonicalRestName(restRaw);
   const cityVal=document.getElementById('f-city').value;
-  const city=cityVal==='__custom__'?(document.getElementById('f-city-custom').value.trim()||'Other'):cityVal;
+  let city=cityVal==='__custom__'?(document.getElementById('f-city-custom').value.trim()||'Other'):cityVal;
+  const dir=matchRestaurant(rest);
+  if(dir&&dir.city)city=dir.city;
   const date=document.getElementById('f-date').value;
   const notes=document.getElementById('f-notes').value.trim();
   if(!restRaw){alert('Please enter a restaurant name.');return;}
@@ -1349,11 +1461,12 @@ function saveEntry(){
     const emoji=row.querySelector('.de').value||'🍽️';
     const rating=parseFloat(row.querySelector('.dr').value);
     if(!dish||isNaN(rating)||rating<1||rating>10)return;
-    data.push({id:Date.now()+Math.random(),restaurant:restRaw,city,date,dish,emoji,rating,notes});
+    data.push({id:Date.now()+Math.random(),restaurant:rest,city,date,dish,emoji,rating,notes,type:isDrink({dish,emoji,rating,type:'dish'})?'drink':'dish'});
     added++;
   });
   if(!added){alert('Add at least one dish with a name and rating (1–10).');return;}
   save();closeModal();renderOverview();
+  if(document.getElementById('page-rankings').classList.contains('active'))renderRankings();
   if(document.getElementById('page-totry').classList.contains('active'))renderToTry();
   if(document.getElementById('page-drinks').classList.contains('active'))renderDrinks();
 }

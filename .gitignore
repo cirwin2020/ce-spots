@@ -3,5 +3,5 @@
 photos/.DS_Store
 *.HEIC
 
-# Large scrape output (optional — remove this line to commit the CSV)
 data/restaurants.csv
+# restaurants.json is committed for GitHub Pages (Sheets is source of truth after sync)
