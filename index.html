@@ -491,6 +491,9 @@ tr.trow:hover td{background:#FDF7FD;cursor:pointer}
 // ─── LOGIN ────────────────────────────────────────────────────────────────────
 // Add your photos to the photos/ folder, then list them here (or use any image URL).
 const LOGIN_PHOTOS=[
+  'photos/IMG_5616.png',
+  'photos/IMG_5610.png',
+  'photos/IMG_5615.png',
   'photos/IMG_5318.JPG',
   'photos/IMG_5325.JPG',
   'photos/IMG_5326.JPG',
@@ -1193,7 +1196,7 @@ function renderRecs(){
   Object.entries(tryLists).forEach(([section,items])=>{
     const city=section.includes('NYC')?'NYC':section.includes('Hamptons')?'Hamptons':section.includes('Palm Beach')?'Palm Beach':'NYC';
     items.forEach(item=>{
-      if(v.has(item.name.toLowerCase().trim()))return;
+      if(v.has(normRestKey(canonicalRestName(item.name))))return;
       const c=guessCuisine(item.name);
       const cm=profile.find(p=>p.cat===c.cat);
       const score=Math.min(1,(cm?(cm.avg/10):0.75)*0.85+(item.star?0.08:0)+0.05);
@@ -1230,16 +1233,18 @@ function renderRecs(){
 function renderToTry(){
   const v=visited();
   document.getElementById('totry-content').innerHTML=Object.entries(tryLists).map(([section,items])=>{
-    const done=items.filter(i=>v.has(i.name.toLowerCase().trim())).length;
+    const done=items.filter(i=>v.has(normRestKey(canonicalRestName(i.name)))).length;
     const sid=section.replace(/[^a-zA-Z0-9]/g,'_');
     const city=section.includes('NYC')?'NYC':section.includes('Hamptons')?'Hamptons':section.includes('Palm Beach')?'Palm Beach':'NYC';
     return`<div class="try-section">
       <div class="try-sh"><div class="try-title">${section}<span class="try-pill">${done}/${items.length} visited</span></div></div>
       <div class="try-grid">${items.map(item=>{
-        const isV=v.has(item.name.toLowerCase().trim());
+        const isV=v.has(normRestKey(canonicalRestName(item.name)));
+        const dir=matchRestaurant(item.name);
+        const meta=dir?[dir.cuisine||guessCuisine(dir.name).cat,dir.google_rating?fmt(parseFloat(dir.google_rating))+' ★':'',dir.neighborhood||''].filter(Boolean).join(' · '):'';
         return`<div class="try-item ${isV?'visited':''}" onclick="tryClick('${item.name.replace(/'/g,"\\'")}','${city}')">
           <div class="try-chk">${isV?'✓':''}</div>
-          <div class="try-name">${item.name}${item.star?' ⭐':''}</div>
+          <div style="flex:1;min-width:0"><div class="try-name">${item.name}${item.star?' ⭐':''}</div>${meta?`<div style="font-size:11px;color:var(--muted);margin-top:1px">${meta}</div>`:''}</div>
         </div>`;}).join('')}</div>
       <div class="try-add">
         <input type="text" placeholder="Add a place..." id="add-${sid}" onkeydown="if(event.key==='Enter')addTry('${section}','${sid}')" />
