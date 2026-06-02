@@ -1,0 +1,7 @@
+.env
+.DS_Store
+photos/.DS_Store
+*.HEIC
+
+# Large scrape output (optional — remove this line to commit the CSV)
+data/restaurants.csv
