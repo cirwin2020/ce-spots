@@ -181,6 +181,10 @@ tr.trow:hover td{background:#FDF7FD;cursor:pointer}
 .explore-add-btn{width:34px;height:34px;border-radius:50%;border:1.5px solid var(--pink);background:#fff;color:var(--pink);font-size:20px;line-height:1;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:inherit;transition:all .15s}
 .explore-add-btn:hover{background:var(--pink);color:#fff}
 .explore-on-list{font-size:11px;color:var(--muted);white-space:nowrap;padding:8px 4px;flex-shrink:0}
+.dp-maps-link{display:inline-block;margin-top:12px;font-size:13px;font-weight:500;color:var(--blue-d);text-decoration:none}
+.dp-maps-link:hover{text-decoration:underline}
+.try-search-hits{margin-bottom:20px}
+.try-search-hits .try-title{margin-bottom:10px}
 
 /* TO TRY */
 .try-section{margin-bottom:22px}
@@ -410,13 +414,16 @@ tr.trow:hover td{background:#FDF7FD;cursor:pointer}
 
 <!-- TO TRY -->
 <div id="page-totry" class="page">
-  <div class="ph"><h1>To Try</h1><p>Click any place to log your visit and add dish scores.</p></div>
+  <div class="ph"><h1>To Try</h1><p id="tt-sub">Click any place to log your visit and add dish scores.</p></div>
+  <div class="filters"><div class="srch" style="flex:1"><input type="text" id="tt-search" placeholder="Search your list or find a new restaurant..." oninput="ttSearch=this.value;renderToTry()"></div></div>
   <div id="totry-content"></div>
 </div>
 
 <!-- TO DO -->
 <div id="page-todo" class="page">
-  <div class="ph"><h1>To Do</h1><p>Tasks, things to make, places to see.</p></div>
+  <div class="ph"><h1>To Do</h1><p id="todo-sub">Tasks, things to make, places to see.</p></div>
+  <div class="filters"><div class="srch" style="flex:1"><input type="text" id="todo-search" placeholder="Search tasks or restaurants..." oninput="todoSearch=this.value;renderTodo()"></div></div>
+  <div id="todo-rest-hits"></div>
   <div id="todo-content"></div>
   <div class="sc" style="margin-top:8px">
     <div class="sc-head"><h3>Add a Task</h3></div>
@@ -837,6 +844,33 @@ function matchRestaurant(name){
   return null;
 }
 function canonicalRestName(name){const m=matchRestaurant(name);return m?m.name:String(name||'').trim();}
+function restLocLine(dir){
+  if(!dir)return'';
+  const parts=[dir.neighborhood,dir.city].filter(Boolean);
+  if(parts.length)return parts.join(', ');
+  if(dir.address){const p=dir.address.split(',').map(s=>s.trim());return p.length>=2?p.slice(0,2).join(', '):dir.address;}
+  return dir.city||'';
+}
+function filterRestaurants(q,limit=80){
+  const s=q.trim().toLowerCase();
+  if(!s||!restaurants.length)return[];
+  return restaurants.filter(r=>
+    r.name.toLowerCase().includes(s)||
+    (r.neighborhood||'').toLowerCase().includes(s)||
+    (r.cuisine||'').toLowerCase().includes(s)||
+    (r.city||'').toLowerCase().includes(s)||
+    (r.address||'').toLowerCase().includes(s)
+  ).slice(0,limit);
+}
+function mapsUrl(dir){
+  if(!dir)return'#';
+  if(dir.place_id)return`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dir.name)}&query_place_id=${dir.place_id}`;
+  return`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((dir.address||dir.name)+' '+(dir.city||''))}`;
+}
+function dpMapsLink(dir){
+  if(!dir||(!dir.place_id&&!dir.address))return'';
+  return`<a class="dp-maps-link" href="${mapsUrl(dir)}" target="_blank" rel="noopener">📍 Open in Maps</a>`;
+}
 function dishesForRestaurant(name){
   const canon=canonicalRestName(name);
   const key=normRestKey(canon);
@@ -1130,7 +1164,7 @@ function rkBlockFromDir(r){
   const items=dishesForRestaurant(r.name);
   const sorted=[...items].sort((a,b)=>b.rating-a.rating);
   const c=r.cuisine?{cat:r.cuisine,emoji:guessCuisine(r.name).emoji}:guessCuisine(r.name);
-  return{name:r.name,city:r.city,neighborhood:r.neighborhood||'',cuisine:c,sorted,a:items.length?avgR(items):null,cnt:items.length,google_rating:r.google_rating,visited:items.length>0};
+  return{name:r.name,city:r.city,neighborhood:r.neighborhood||'',address:r.address||'',cuisine:c,sorted,a:items.length?avgR(items):null,cnt:items.length,google_rating:r.google_rating,visited:items.length>0};
 }
 function rkVisitedBlocks(){
   const groups={};
@@ -1144,7 +1178,7 @@ function rkVisitedBlocks(){
     const dir=matchRestaurant(g.name);
     const sorted=[...g.items].sort((a,b)=>b.rating-a.rating);
     const c=dir&&dir.cuisine?{cat:dir.cuisine,emoji:guessCuisine(g.name).emoji}:guessCuisine(g.name);
-    return{name:g.name,city:dir?dir.city:(g.items[0].city||''),neighborhood:dir?(dir.neighborhood||''):'',cuisine:c,sorted,a:avgR(g.items),cnt:g.items.length,google_rating:dir?dir.google_rating:'',visited:true};
+    return{name:g.name,city:dir?dir.city:(g.items[0].city||''),neighborhood:dir?(dir.neighborhood||''):'',address:dir?(dir.address||''):'',cuisine:c,sorted,a:avgR(g.items),cnt:g.items.length,google_rating:dir?dir.google_rating:'',visited:true};
   }).sort((a,b)=>(b.a||0)-(a.a||0));
 }
 function renderRankings(){
@@ -1152,8 +1186,7 @@ function renderRankings(){
   const q=rkSearch.trim().toLowerCase();
   let blocks;
   if(q&&restaurants.length){
-    blocks=restaurants.filter(r=>r.name.toLowerCase().includes(q)||(r.neighborhood||'').toLowerCase().includes(q)||(r.cuisine||'').toLowerCase().includes(q))
-      .slice(0,150).map(rkBlockFromDir)
+    blocks=filterRestaurants(q,150).map(rkBlockFromDir)
       .sort((a,b)=>{if(a.visited!==b.visited)return a.visited?-1:1;if(a.visited&&b.visited)return(b.a||0)-(a.a||0);return(parseFloat(b.google_rating)||0)-(parseFloat(a.google_rating)||0);});
     if(sub)sub.textContent=`${blocks.length} match${blocks.length===1?'':'es'} for “${rkSearch.trim()}” — tap a spot to log a visit`;
   }else{
@@ -1165,7 +1198,7 @@ function renderRankings(){
     <div class="rest-block${r.visited?'':' not-visited'}" onclick="showRestaurant('${escJs(r.name)}')">
       <div class="rest-block-emoji">${r.cuisine.emoji}</div>
       <div class="rest-block-name">${r.name}</div>
-      <div class="rest-block-meta">${r.city}${r.neighborhood?' · '+r.neighborhood:''}</div>
+      <div class="rest-block-meta">${restLocLine(r)||r.city}</div>
       <div class="rest-block-dishes">${r.sorted.slice(0,6).map(d=>`<span title="${d.dish.replace(/"/g,'&quot;')}">${d.emoji}</span>`).join('')}${!r.cnt?'<span class="rest-block-tag">Not visited yet</span>':''}</div>
       <div class="rest-block-foot">
         <div class="rest-block-cnt">${r.cnt?r.cnt+' dish'+(r.cnt===1?'':'es'):'Tap to log'}</div>
@@ -1230,28 +1263,72 @@ function renderRecs(){
 }
 
 // ─── TO TRY ──────────────────────────────────────────────────────────────────
+let ttSearch='';
+function trySectionCity(section){
+  if(section.includes('Hamptons'))return'Hamptons';
+  if(section.includes('Palm Beach'))return'Palm Beach';
+  return'NYC';
+}
+function tryItemMeta(dir){
+  if(!dir)return'';
+  return[dir.cuisine||guessCuisine(dir.name).cat,dir.google_rating?fmt(parseFloat(dir.google_rating))+' ★':'',restLocLine(dir)].filter(Boolean).join(' · ');
+}
+function tryItemHtml(item,city,v){
+  const isV=v.has(normRestKey(canonicalRestName(item.name)));
+  const dir=matchRestaurant(item.name);
+  const meta=tryItemMeta(dir);
+  return`<div class="try-item ${isV?'visited':''}" onclick="tryClick('${escJs(item.name)}','${escJs(city)}')">
+    <div class="try-chk">${isV?'✓':''}</div>
+    <div style="flex:1;min-width:0"><div class="try-name">${item.name}${item.star?' ⭐':''}</div>${meta?`<div style="font-size:11px;color:var(--muted);margin-top:1px">${meta}</div>`:''}</div>
+  </div>`;
+}
+function addTryFromSearch(name,city){
+  const section=city==='Hamptons'?'Hamptons':city==='Palm Beach'?'Palm Beach':'NYC — Dinner';
+  if(isOnTryList(name)){tryClick(name,city);return;}
+  if(!tryLists[section])tryLists[section]=[];
+  tryLists[section].push({name:canonicalRestName(name)});
+  save();renderToTry();
+}
 function renderToTry(){
   const v=visited();
-  document.getElementById('totry-content').innerHTML=Object.entries(tryLists).map(([section,items])=>{
+  const q=ttSearch.trim().toLowerCase();
+  const sub=document.getElementById('tt-sub');
+  let html='';
+  if(q&&restaurants.length){
+    const onList=new Set();
+    Object.values(tryLists).flat().forEach(i=>onList.add(normRestKey(canonicalRestName(i.name))));
+    const dirHits=filterRestaurants(q,40).filter(r=>!onList.has(normRestKey(r.name)));
+    if(dirHits.length){
+      html+=`<div class="try-search-hits"><div class="try-title">Add from search</div><div class="try-grid">${dirHits.map(r=>{
+        const city=r.city||'NYC';
+        return`<div class="try-item" onclick="addTryFromSearch('${escJs(r.name)}','${escJs(city)}')">
+          <div class="try-chk">+</div>
+          <div style="flex:1;min-width:0"><div class="try-name">${r.name}</div><div style="font-size:11px;color:var(--muted);margin-top:1px">${tryItemMeta(r)}</div></div>
+        </div>`;}).join('')}</div></div>`;
+    }
+  }
+  const sections=Object.entries(tryLists).map(([section,items])=>{
+    const filtered=q?items.filter(i=>{
+      const dir=matchRestaurant(i.name);
+      const blob=(i.name+' '+(dir?tryItemMeta(dir):'')).toLowerCase();
+      return blob.includes(q);
+    }):items;
+    if(q&&!filtered.length)return'';
     const done=items.filter(i=>v.has(normRestKey(canonicalRestName(i.name)))).length;
     const sid=section.replace(/[^a-zA-Z0-9]/g,'_');
-    const city=section.includes('NYC')?'NYC':section.includes('Hamptons')?'Hamptons':section.includes('Palm Beach')?'Palm Beach':'NYC';
+    const city=trySectionCity(section);
     return`<div class="try-section">
       <div class="try-sh"><div class="try-title">${section}<span class="try-pill">${done}/${items.length} visited</span></div></div>
-      <div class="try-grid">${items.map(item=>{
-        const isV=v.has(normRestKey(canonicalRestName(item.name)));
-        const dir=matchRestaurant(item.name);
-        const meta=dir?[dir.cuisine||guessCuisine(dir.name).cat,dir.google_rating?fmt(parseFloat(dir.google_rating))+' ★':'',dir.neighborhood||''].filter(Boolean).join(' · '):'';
-        return`<div class="try-item ${isV?'visited':''}" onclick="tryClick('${item.name.replace(/'/g,"\\'")}','${city}')">
-          <div class="try-chk">${isV?'✓':''}</div>
-          <div style="flex:1;min-width:0"><div class="try-name">${item.name}${item.star?' ⭐':''}</div>${meta?`<div style="font-size:11px;color:var(--muted);margin-top:1px">${meta}</div>`:''}</div>
-        </div>`;}).join('')}</div>
-      <div class="try-add">
+      <div class="try-grid">${filtered.map(item=>tryItemHtml(item,city,v)).join('')}</div>
+      ${q?'':`<div class="try-add">
         <input type="text" placeholder="Add a place..." id="add-${sid}" onkeydown="if(event.key==='Enter')addTry('${section}','${sid}')" />
         <button onclick="addTry('${section}','${sid}')">+ Add</button>
-      </div>
+      </div>`}
     </div>`;
-  }).join('');
+  }).filter(Boolean).join('');
+  html+=sections||'';
+  if(sub)sub.textContent=q?`Filtering your list${restaurants.length?' · tap + to add from search':''}`:'Click any place to log your visit and add dish scores.';
+  document.getElementById('totry-content').innerHTML=html||`<div style="padding:16px;color:var(--faint);font-size:13px">${q?'No matches on your list.':'Your list is empty.'}</div>`;
 }
 function tryClick(name,city){openModal(name,city);}
 function addTry(section,sid){
@@ -1260,10 +1337,23 @@ function addTry(section,sid){
 }
 
 // ─── TO DO ───────────────────────────────────────────────────────────────────
+let todoSearch='';
 function renderTodo(){
-  const cats=[...new Set(todos.map(t=>t.cat))];
-  document.getElementById('todo-content').innerHTML=cats.map(cat=>{
-    const items=todos.filter(t=>t.cat===cat);
+  const q=todoSearch.trim().toLowerCase();
+  const sub=document.getElementById('todo-sub');
+  const hitsEl=document.getElementById('todo-rest-hits');
+  if(q&&restaurants.length&&hitsEl){
+    const dirHits=filterRestaurants(q,12);
+    hitsEl.innerHTML=dirHits.length?`<div class="try-search-hits"><div class="try-title">Restaurants</div><div class="try-grid">${dirHits.map(r=>`
+      <div class="try-item" onclick="showRestaurant('${escJs(r.name)}')">
+        <div style="flex:1;min-width:0"><div class="try-name">${r.name}</div><div style="font-size:11px;color:var(--muted);margin-top:1px">${tryItemMeta(r)}</div></div>
+      </div>`).join('')}</div></div>`:'';
+  }else if(hitsEl)hitsEl.innerHTML='';
+  const filtered=q?todos.filter(t=>t.text.toLowerCase().includes(q)||t.cat.toLowerCase().includes(q)):todos;
+  if(sub)sub.textContent=q?`${filtered.length} task${filtered.length===1?'':'s'} match`:'Tasks, things to make, places to see.';
+  const cats=[...new Set(filtered.map(t=>t.cat))];
+  document.getElementById('todo-content').innerHTML=cats.length?cats.map(cat=>{
+    const items=filtered.filter(t=>t.cat===cat);
     return`<div class="todo-section">
       <div class="sc">
         <div class="sc-head"><h3>${cat}</h3><span class="sc-meta">${items.filter(t=>t.done).length}/${items.length} done</span></div>
@@ -1272,12 +1362,12 @@ function renderTodo(){
             <div class="todo-item ${t.done?'done':''}" id="todo-${t.id}">
               <div class="todo-chk" onclick="toggleTodo(${t.id})">${t.done?'✓':''}</div>
               <div class="todo-text">${t.text}</div>
-              <button class="cal-btn" onclick="addToCalendar('${t.text.replace(/'/g,"\\'")}')">📅 Calendar</button>
+              <button class="cal-btn" onclick="addToCalendar('${escJs(t.text)}')">📅 Calendar</button>
             </div>`).join('')}
         </div>
       </div>
     </div>`;
-  }).join('');
+  }).join(''):`<div style="padding:16px;color:var(--faint);font-size:13px">${q?'No tasks match.':'No tasks yet.'}</div>`;
 }
 function toggleTodo(id){
   const t=todos.find(x=>x.id===id);if(t){t.done=!t.done;save();renderTodo();}
@@ -1329,7 +1419,8 @@ function showRestaurant(name){
         <div class="dp-dish" onclick="showDish(${d.id})">
           <div class="dp-dish-name">${d.emoji} ${d.dish}${d.notes?`<span style="font-size:11px;color:var(--faint);margin-left:4px">${d.notes}</span>`:''}</div>
           <div style="display:flex;align-items:center;gap:6px">${badge(d.rating)}<div class="dp-dish-sc" style="color:${rColor(d.rating)}">${fmt(d.rating)}</div></div>
-        </div>`).join('')}`;
+        </div>`).join('')}
+      ${dpMapsLink(dir)}`;
   }else if(dir){
     const gr=parseFloat(dir.google_rating);
     document.getElementById('dp-cuisine').textContent=`${cuisine.emoji} ${cuisine.cat}`;
@@ -1345,6 +1436,7 @@ function showRestaurant(name){
         <div class="dp-stat"><div class="dp-stat-l">Price</div><div class="dp-stat-v">${dir.price||'—'}</div></div>
       </div>
       ${dir.address?`<div style="margin-top:12px;font-size:13px;color:var(--muted);line-height:1.5">${dir.address}</div>`:''}
+      ${dpMapsLink(dir)}
       <div style="margin-top:16px">
         <button class="login-btn" style="width:100%" onclick="closePanel();openModal('${escJs(display)}','${escJs(dir.city)}')">+ Log a visit</button>
       </div>`;
